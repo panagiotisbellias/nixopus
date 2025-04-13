@@ -76,18 +76,26 @@ func (m *MainView) View() string {
 	row = lipgloss.JoinHorizontal(lipgloss.Bottom, row, gap)
 	doc.WriteString(row + "\n\n")
 
+	var content string
 	switch m.activeTab {
 	case 0:
-		doc.WriteString("Auth View - Login/Register")
+		content = "Auth View - Login/Register"
 	case 1:
-		doc.WriteString("Organizations View - Manage Organizations")
+		content = "Organizations View - Manage Organizations"
 	case 2:
-		doc.WriteString("Deployments View - Manage Deployments")
+		content = "Deployments View - Manage Deployments"
 	case 3:
-		doc.WriteString("Settings View - Configure Settings")
+		content = "Settings View - Configure Settings"
 	}
 
-	return doc.String()
+	border := lipgloss.NewStyle().
+		BorderStyle(lipgloss.NormalBorder()).
+		BorderForeground(lipgloss.Color("62")).
+		Padding(1, 2).
+		Width(m.width - 4).
+		Height(m.height - 6)
+
+	return border.Render(doc.String() + content)
 }
 
 func max(a, b int) int {

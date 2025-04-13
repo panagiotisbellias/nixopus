@@ -7,7 +7,7 @@ import (
     tea "github.com/charmbracelet/bubbletea"
 	"github.com/raghavyuva/nixopus-api/internal/config"
 	"github.com/raghavyuva/nixopus-api/internal/storage"
-	"github.com/raghavyuva/nixopus-api/internal/tui/views"
+	"github.com/raghavyuva/nixopus-api/tui/views"
 	"github.com/raghavyuva/nixopus-api/internal/types"
 )
 
@@ -57,6 +57,9 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
+// View renders the current view
+// If the user is authenticated, it renders the main view
+// Otherwise, it renders the auth view
 func (m model) View() string {
 	if m.authView.IsAuthenticated {
 		return m.mainView.View()

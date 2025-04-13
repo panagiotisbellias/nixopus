@@ -34,6 +34,8 @@ type AuthView struct {
 	errorMessage    string
 	IsAuthenticated bool
 	isPasswordField bool
+	cursor          int
+	choices         []string
 }
 
 func NewAuthView(store *appStorage.Store, ctx context.Context) *AuthView {
@@ -85,6 +87,14 @@ func (a *AuthView) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 		case "tab":
 			a.isPasswordField = !a.isPasswordField
+		case "up", "k":
+			if a.cursor > 0 {
+				a.cursor--
+			}
+		case "down", "j":
+			if a.cursor < len(a.choices)-1 {
+				a.cursor++
+			}
 		case "backspace":
 			if a.isPasswordField {
 				if len(a.password) > 0 {
@@ -122,7 +132,6 @@ func (a *AuthView) View() string {
 	doc.WriteString(title + "\n\n")
 
 	usernameLabel := lipgloss.NewStyle().
-		Foreground(lipgloss.Color("240")).
 		Render("Username: ")
 	usernameInput := lipgloss.NewStyle().
 		Foreground(lipgloss.Color("255")).
@@ -130,7 +139,6 @@ func (a *AuthView) View() string {
 	if !a.isPasswordField {
 		usernameInput = lipgloss.NewStyle().
 			Foreground(lipgloss.Color("255")).
-			Background(lipgloss.Color("62")).
 			Render(a.username)
 	}
 	doc.WriteString(usernameLabel + usernameInput + "\n")
@@ -144,7 +152,6 @@ func (a *AuthView) View() string {
 	if a.isPasswordField {
 		passwordInput = lipgloss.NewStyle().
 			Foreground(lipgloss.Color("255")).
-			Background(lipgloss.Color("62")).
 			Render(strings.Repeat("*", len(a.password)))
 	}
 	doc.WriteString(passwordLabel + passwordInput + "\n")
@@ -161,5 +168,12 @@ func (a *AuthView) View() string {
 		doc.WriteString("\n\n" + errorStyle)
 	}
 
-	return doc.String()
+	border := lipgloss.NewStyle().
+		BorderStyle(lipgloss.NormalBorder()).
+		BorderForeground(lipgloss.Color("62")).
+		Padding(1, 2).
+		Width(a.width - 4).
+		Height(a.height - 4)
+
+	return border.Render(doc.String())
 }
