@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"flag"
 	"log"
 	"net/http"
 
@@ -22,6 +23,14 @@ func main() {
 	store := config.Init()
 	ctx := context.Background()
 	app := storage.NewApp(&types.Config{}, store, ctx)
+
+	tuiMode := flag.Bool("tui", false, "Run in TUI mode")
+	flag.Parse()
+
+	if *tuiMode {
+		runTUI()
+		return
+	}
 
 	// cacheClient, err := cache.NewCache(config.AppConfig.RedisURL)
 	// if err != nil {
