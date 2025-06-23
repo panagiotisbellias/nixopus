@@ -18,6 +18,7 @@ import { useNavigationState } from '@/hooks/use_navigation_state';
 import { hasPermission } from '@/lib/permission';
 import { setActiveOrganization } from '@/redux/features/users/userSlice';
 import { useTranslation } from '@/hooks/use-translation';
+import { UserOrganization } from '@/redux/types/orgs';
 
 const data = {
   navMain: [
@@ -76,10 +77,21 @@ const data = {
   ]
 };
 
+type AppSidebarProps = {
+  displayTeam: {
+    name: string,
+    description: string
+  },
+  handleDeleteOrganization: () => Promise<void>;
+  isDeleteDialogOpen: boolean;
+  setIsDeleteDialogOpen: React.Dispatch<React.SetStateAction<boolean>>;
+  handleTeamChange: (team: UserOrganization) => Promise<void>,
+  toggleAddTeamModal: () => void,
+}
+
 export function AppSidebar({
-  toggleAddTeamModal,
   ...props
-}: React.ComponentProps<typeof Sidebar> & { toggleAddTeamModal?: () => void }) {
+}: React.ComponentProps<typeof Sidebar> & AppSidebarProps) {
   const { t } = useTranslation();
   const user = useAppSelector((state) => state.auth.user);
   const { isLoading, refetch } = useGetUserOrganizationsQuery();
@@ -152,7 +164,15 @@ export function AppSidebar({
   return (
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>
-        <TeamSwitcher refetch={refetch} />
+        <TeamSwitcher
+          refetch={refetch}
+          toggleAddTeamModal={props.toggleAddTeamModal}
+          isDeleteDialogOpen={props.isDeleteDialogOpen}
+          setIsDeleteDialogOpen={props.setIsDeleteDialogOpen}
+          handleDeleteOrganization={props.handleDeleteOrganization}
+          handleTeamChange={props.handleTeamChange}
+          displayTeam={props.displayTeam}
+        />
       </SidebarHeader>
       <SidebarContent>
         <NavMain

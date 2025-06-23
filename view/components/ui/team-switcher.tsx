@@ -18,12 +18,24 @@ import {
   useSidebar
 } from '@/components/ui/sidebar';
 import { DeleteDialog } from './delete-dialog';
-import useTeamSwitcher from '@/hooks/use-team-switcher';
 import { useAppSelector } from '@/redux/hooks';
 import { UserOrganization } from '@/redux/types/orgs';
 import { useResourcePermissions } from '@/lib/permission';
 
-export function TeamSwitcher({ refetch }: { refetch: () => void }) {
+type TeamSwitcherProps = {
+  refetch: () => void;
+  displayTeam: {
+    name: string,
+    description: string
+  },
+  handleDeleteOrganization: () => Promise<void>;
+  isDeleteDialogOpen: boolean;
+  setIsDeleteDialogOpen: React.Dispatch<React.SetStateAction<boolean>>;
+  handleTeamChange: (team: UserOrganization) => Promise<void>,
+  toggleAddTeamModal: () => void
+}
+
+export function TeamSwitcher({ refetch, displayTeam, handleDeleteOrganization, setIsDeleteDialogOpen, isDeleteDialogOpen, handleTeamChange, toggleAddTeamModal }: TeamSwitcherProps) {
   const { isMobile } = useSidebar();
   const teams = useAppSelector((state) => state.user.organizations);
   const user = useAppSelector((state) => state.auth.user);
@@ -33,14 +45,6 @@ export function TeamSwitcher({ refetch }: { refetch: () => void }) {
     'organization',
     activeOrganization?.id
   );
-  const {
-    toggleAddTeamModal,
-    handleTeamChange,
-    handleDeleteOrganization,
-    isDeleteDialogOpen,
-    setIsDeleteDialogOpen,
-    displayTeam
-  } = useTeamSwitcher();
 
   const canCreateOrg = () => {
     if (user.type === 'admin') {
@@ -104,7 +108,7 @@ export function TeamSwitcher({ refetch }: { refetch: () => void }) {
                   {team.organization.name}
                 </DropdownMenuItem>
               ))}
-              {/* {canCreateOrg() || (canDeleteOrg && <DropdownMenuSeparator />)}
+              {canCreateOrg() || (canDeleteOrg && <DropdownMenuSeparator />)}
               {canCreateOrg() && (
                 <DropdownMenuItem className="gap-2 p-2" onClick={toggleAddTeamModal}>
                   <div className="bg-background flex size-6 items-center justify-center rounded-md border">
@@ -123,7 +127,7 @@ export function TeamSwitcher({ refetch }: { refetch: () => void }) {
                   </div>
                   <div className="text-muted-foreground font-medium">Delete team</div>
                 </DropdownMenuItem>
-              )} */}
+              )}
             </DropdownMenuContent>
           </DropdownMenu>
         </SidebarMenuItem>

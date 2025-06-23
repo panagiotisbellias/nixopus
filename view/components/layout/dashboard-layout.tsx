@@ -14,7 +14,7 @@ import { CreateTeam } from '@/components/features/create-team';
 import { KeyboardShortcuts } from '@/components/features/keyboard-shortcuts';
 import useTeamSwitcher from '@/hooks/use-team-switcher';
 import useBreadCrumbs from '@/hooks/use-bread-crumbs';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import { Terminal } from '@/app/terminal/terminal';
 import { useTerminalState } from '@/app/terminal/utils/useTerminalState';
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '@/components/ui/resizable';
@@ -23,7 +23,7 @@ import Link from 'next/link';
 import { Tour } from '@/components/Tour';
 import { useTour } from '@/hooks/useTour';
 import { Button } from '@/components/ui/button';
-import { HelpCircle, Loader2 } from 'lucide-react';
+import { HelpCircle } from 'lucide-react';
 import { UpdateIcon } from '@radix-ui/react-icons';
 import { useAppSelector } from '@/redux/hooks';
 import { useCheckForUpdatesQuery, usePerformUpdateMutation } from '@/redux/services/users/userApi';
@@ -48,7 +48,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     teamDescription,
     isLoading,
     handleTeamNameChange,
-    handleTeamDescriptionChange
+    handleTeamDescriptionChange,
+    isDeleteDialogOpen,
+    setIsDeleteDialogOpen,
+    displayTeam,
+    handleDeleteOrganization,
+    handleTeamChange
   } = useTeamSwitcher();
   const { getBreadcrumbs } = useBreadCrumbs();
   const breadcrumbs = React.useMemo(() => getBreadcrumbs(), [getBreadcrumbs]);
@@ -91,7 +96,14 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   return (
     <SidebarProvider defaultOpen={true}>
-      <AppSidebar toggleAddTeamModal={toggleAddTeamModal} />
+      <AppSidebar
+        toggleAddTeamModal={toggleAddTeamModal}
+        isDeleteDialogOpen={isDeleteDialogOpen}
+        setIsDeleteDialogOpen={setIsDeleteDialogOpen}
+        handleDeleteOrganization={handleDeleteOrganization}
+        handleTeamChange={handleTeamChange}
+        displayTeam={displayTeam}
+      />
       <SidebarInset>
         <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
           <div className="flex items-center gap-2 px-4 justify-between w-full">

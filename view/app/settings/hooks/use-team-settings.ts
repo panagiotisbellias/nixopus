@@ -74,7 +74,7 @@ function useTeamSettings() {
     const permissions = newUser.role === 'Member' ? ['READ', 'UPDATE'] : ['READ'];
     setUsers([...users, { id: newId, ...tempUser, name: newUser.name, permissions }]);
     try {
-      const user = await createUser(tempUser as any);
+      const user = await createUser(tempUser as any).unwrap();
       await refetchUsers();
       toast.success(t('settings.teams.messages.userAdded'));
     } catch (error) {
