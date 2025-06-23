@@ -25,17 +25,25 @@ import { useResourcePermissions } from '@/lib/permission';
 type TeamSwitcherProps = {
   refetch: () => void;
   displayTeam: {
-    name: string,
-    description: string
-  },
+    name: string;
+    description: string;
+  };
   handleDeleteOrganization: () => Promise<void>;
   isDeleteDialogOpen: boolean;
   setIsDeleteDialogOpen: React.Dispatch<React.SetStateAction<boolean>>;
-  handleTeamChange: (team: UserOrganization) => Promise<void>,
-  toggleAddTeamModal: () => void
-}
+  handleTeamChange: (team: UserOrganization) => Promise<void>;
+  toggleAddTeamModal: () => void;
+};
 
-export function TeamSwitcher({ refetch, displayTeam, handleDeleteOrganization, setIsDeleteDialogOpen, isDeleteDialogOpen, handleTeamChange, toggleAddTeamModal }: TeamSwitcherProps) {
+export function TeamSwitcher({
+  refetch,
+  displayTeam,
+  handleDeleteOrganization,
+  setIsDeleteDialogOpen,
+  isDeleteDialogOpen,
+  handleTeamChange,
+  toggleAddTeamModal
+}: TeamSwitcherProps) {
   const { isMobile } = useSidebar();
   const teams = useAppSelector((state) => state.user.organizations);
   const user = useAppSelector((state) => state.auth.user);

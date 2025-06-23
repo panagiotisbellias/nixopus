@@ -79,19 +79,17 @@ const data = {
 
 type AppSidebarProps = {
   displayTeam: {
-    name: string,
-    description: string
-  },
+    name: string;
+    description: string;
+  };
   handleDeleteOrganization: () => Promise<void>;
   isDeleteDialogOpen: boolean;
   setIsDeleteDialogOpen: React.Dispatch<React.SetStateAction<boolean>>;
-  handleTeamChange: (team: UserOrganization) => Promise<void>,
-  toggleAddTeamModal: () => void,
-}
+  handleTeamChange: (team: UserOrganization) => Promise<void>;
+  toggleAddTeamModal: () => void;
+};
 
-export function AppSidebar({
-  ...props
-}: React.ComponentProps<typeof Sidebar> & AppSidebarProps) {
+export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar> & AppSidebarProps) {
   const { t } = useTranslation();
   const user = useAppSelector((state) => state.auth.user);
   const { isLoading, refetch } = useGetUserOrganizationsQuery();
