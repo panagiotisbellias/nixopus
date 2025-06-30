@@ -52,7 +52,8 @@ export default withMermaid(
       nav: [
         { text: 'Home', link: '/' },
         { text: 'Get Started', link: '/install/index.md' },
-        { text: 'Blog', link: '/blog/' }
+        { text: 'Blog', link: '/blog/' },
+        { text: 'Ask', link: 'https://discord.com/invite/skdcq39Wpv' }
       ],
       footer: {
         message: `<img src="https://madewithlove.now.sh/in?heart=true&colorA=%23ff671f&colorB=%23046a38&text=Open%20Source" alt="Made with love" style="display:block;margin:0 auto;" /><br>Released under the Functional Source License (FSL)`,
@@ -88,14 +89,55 @@ export default withMermaid(
           items: [
             {
               text: 'Contribution',
+              collapsed: false,
+              collapsedByDefault: true,
               items: [
-                { text: 'Overview', link: '/contributing/index.md' },
-                { text: 'Backend', link: '/contributing/backend.md' },
-                { text: 'Frontend', link: '/contributing/frontend.md' },
-                { text: 'Documentation', link: '/contributing/documentation.md' },
-                { text: 'Docker', link: '/contributing/docker.md' },
-                { text: 'Self Hosting', link: '/contributing/self-hosting.md' },
-                { text: 'Fixtures', link: '/contributing/fixtures.md' }
+                {
+                  text: 'Overview', link: '/contributing/index.md', collapsed: true
+                },
+                {
+                  text: 'Backend', link: '/contributing/backend.md',
+                  collapsed: true,
+                  items: [
+                    { text: 'Overview', link: '/contributing/backend/overview.md' },
+                    { text: 'Architecture', link: '/contributing/backend/backend-architecture.md' },
+                    { text: "Migrations & Fixtures", link: '/contributing/backend/migrations-and-fixtures.md' },
+                    { text: 'Testing', link: '/contributing/backend/testing.md' },
+                  ]
+                },
+                {
+                  text: 'Frontend',
+                  link: '/contributing/frontend.md',
+                  collapsed: true,
+                  items: [
+                    { text: 'Overview', link: '/contributing/frontend/frontend.md' },
+                    { text: 'Architecture', link: '/contributing/frontend/frontend-architecture.md' },
+                  ]
+                },
+                {
+                  text: 'Documentation',
+                  collapsed: true,
+                  link: '/contributing/documentation.md',
+                  items: [
+                    { text: 'Overview', link: '/contributing/documentation.md' },
+                    { text: 'Architecture', link: '/contributing/documentation-architecture.md' },
+                  ]
+                },
+                {
+                  text: 'Getting Involved',
+                  link: '/contributing/getting-involved/making-changes.md',
+                  collapsed: true,
+                  items: [
+                    {
+                      text: 'Making Changes',
+                      link: '/contributing/getting-involved/making-changes.md',
+                    },
+                    {
+                      text: "Proposing Changes",
+                      link: '/contributing/getting-involved/proposing-changes.md',
+                    }
+                  ]
+                }
               ]
             },
             { text: "Code of Conduct", link: "/code-of-conduct/index.md" },

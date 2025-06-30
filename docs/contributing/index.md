@@ -1,32 +1,18 @@
-# Contributing to Nixopus
+# Contribution Guidelines
 
-Thank you for your interest in contributing to Nixopus! This guide will help you get started with the development setup and explain the contribution process.
+Welcome to the Nixopus Contribution Guidelines. This page serves as an index to our detailed contribution guides. We value and appreciate all contributions to the project, whether they're bug fixes, feature additions, documentation improvements, or any other enhancements.
 
-## Table of Contents
+## Choose Your Contribution Area
 
-- [Contributing to Nixopus](#contributing-to-nixopus)
-  - [Table of Contents](#table-of-contents)
-  - [Specialized Contribution Guides](#specialized-contribution-guides)
-  - [Code of Conduct](#code-of-conduct)
-  - [Development Setup](#development-setup)
-  - [Running the Application](#running-the-application)
-  - [Making Changes](#making-changes)
-  - [Submitting a Pull Request](#submitting-a-pull-request)
-  - [Proposing New Features](#proposing-new-features)
-  - [Extending Documentation](#extending-documentation)
-  - [Gratitude](#gratitude)
+Each specialized guide provides detailed instructions for contributing to specific aspects of Nixopus:
 
-## Specialized Contribution Guides
+| Contribution Guide | Description | Key Topics |
+|-------------------|-------------|------------|
+| [General Contributing](index.md) | General contribution workflow | Basic setup, making changes, pull request process |
+| [Backend Development](backend/backend.md) | Go backend contributions | API features, database migrations, testing |
+| [Frontend Development](frontend/frontend.md) | Next.js/React frontend | Component development, Redux integration, UI guidelines |
+| [Documentation](documentation/documentation.md) | Documentation improvements | Add contents on features, content guidelines, API docs |
 
-We provide detailed guides for specific types of contributions:
-
-- [Getting Started with contribution](README.md) - For general contribution guidelines
-- [Backend Development Guide](backend.md) - For Go backend contributions
-- [Frontend Development Guide](frontend.md) - For Next.js/React frontend contributions
-- [Documentation Guide](documentation.md) - For improving or extending documentation
-- [Self-Hosting Guide](self-hosting.md) - For improving installation and self-hosting
-- [Docker Guide](docker.md) - For Docker builds and container optimization
-- [Development Fixtures Guide](fixtures.md) - For working with development data and fixtures
 
 ## Code of Conduct
 
@@ -34,138 +20,183 @@ Before contributing, please review and agree to our [Code of Conduct](/code-of-c
 
 ## Development Setup
 
-If you prefer to set up your development environment manually:
+Before diving into the step by step development setup instructions, you can choose between two setups process:
+- <Badge type="tip">Automatic Setup</Badge>: A single script to install all pre-requisite dependencies, install clone the repository, configure ports, launch PSQL container, generate ssh keys and start both backend and frontend in hot reload mode. This is best for setting up repository for the first time.
 
-1. Clone the repository:
+- <Badge type="tip">Manual Setup</Badge>: In this setup, you will have to individually install Docker, Go, Node.js/Yarn, and Git, and clone the repository, copy and customized your .env files to spin up the database in Docker, giving granular control of your env.
 
+::: details Automatic Setup
+
+We have spent a time making your contribution process hastle free, you just have to run the below command to get started:
+
+
+#### Prerequisites
+
+> [!IMPORTANT]
+> As pre-requisite install Docker & Docker Compose on your machine. <br>
+> Given `curl` by default will be available on MacOS / Linux
+
+| Dependency                     | Installation                                                                                                                                                    |
+| ------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **curl**                       | Assumed present (or install via brew/apt/dnf/yum/pacman)                                                                                                        |
+| **Docker Engine + Compose**    | Manual install & ensure daemon is running                                                                                                                       |
+| **Go (v1.23.4+)**              | `setup.sh` auto-installs (brew on macOS; apt/dnf/yum/pacman on Linux)                                                                                           |
+| **git**                        | `setup.sh` auto-installs (same mechanisms as Go)                                                                                                                |
+| **node & npm**                 | `setup.sh` auto-installs (brew on macOS; apt/dnf/yum on Linux) then uses `npm install -g yarn`                                                                  |
+| **yarn**                       | `setup.sh` auto-installs alongside node/npm                                                                                                                     |
+| **SSH (openssh & ssh-keygen)** | `setup.sh` will install the client if missing (brew on macOS; apt/dnf/yum/pacman on Linux) and generate keys; on macOS you must manually enable “Remote Login.” |
+
+> [!CAUTION]
+> Automatic setup isn’t available for Windows. This script only supports Linux and macOS. <br>
+> Please refer to the [manual installation instructions](#manual-installation) for Windows.
+
+
+#### Installation command
+
+> [!WARNING]
+> Before running the setup script, verify that the default ports are available. If any are already in use, supply alternative port values when invoking the script.
+
+```bash
+sudo bash -c "$(curl -sSL https://raw.githubusercontent.com/raghavyuva/nixopus/refs/heads/master/scripts/setup.sh)"
+```
+
+**Check if ports are available:**
+
+<CodeGroup :tabs="[
+      { label: 'macOS', code: 'lsof -nP -iTCP:8080,7443,5432 -sTCP:LISTEN' },
+      { label: 'Linux', code: 'lsof -nP -iTCP:8080,7443,5432 -sTCP:LISTEN' }]"
+/>
+
+
+
+If any of them is occupied, you will see the following output:
+
+```bash 
+COMMAND     PID      USER   FD   TYPE             DEVICE SIZE/OFF NODE NAME
+Code\x20H 91083 shravan20   61u  IPv4 0xbb24848baadd8bde      0t0  TCP 127.0.0.1:8080 (LISTEN)
+```
+
+#### Using Custom Port Configurations
+
+You can change the port values by running the below commands:
+
+```bash
+sudo bash -c "$(curl -sSL \
+  https://raw.githubusercontent.com/raghavyuva/nixopus/refs/heads/master/scripts/setup.sh)" \
+  --api-port 8081 --view-port 7444 --db-port=5433  # each option is optional
+```
+##### Default port configurations
+
+| **Service**    | **Port** |
+| -------------- | -------- |
+| API Server     | 8080     |
+| Frontend       | 7443     |
+| Database       | 5432     |
+
+:::
+
+
+
+::: details Manual Setup
+
+If you prefer to set up your development environment manually, follow these step-by-step instructions:
+
+#### Prerequisites
+
+| Dependency | Installation |
+|------------|--------------|
+| **Docker Engine + Compose** | [Docker Desktop](https://www.docker.com/products/docker-desktop/) (macOS/Windows) or [Docker Engine](https://docs.docker.com/engine/install/) (Linux) |
+| **Go (v1.23.6+)** | [Official Go Downloads](https://golang.org/dl/) or [Go Installation Guide](installing_go.md) |
+| **Node.js (v18+)** | [Node.js Downloads](https://nodejs.org/en/download/) or [Node Version Manager](https://github.com/nvm-sh/nvm) |
+| **Yarn** | `npm install -g yarn` (after installing Node.js) |
+| **Git** | [Git Downloads](https://git-scm.com/downloads) or package manager (brew/apt/dnf/yum/pacman) |
+
+#### Step 1: Clone the Repository
 ```bash
 git clone https://github.com/raghavyuva/nixopus.git
 cd nixopus
 ```
 
-2. Install Go (version 1.23.6 or newer), and PostgreSQL.
-
-3. Set up PostgreSQL databases:
-
-```bash
-createdb postgres -U postgres
-
-createdb nixopus_test -U postgres
-```
-
-4. Copy and configure environment variables:
-
+#### Step 2: Configure Environment Variables
 ```bash
 cp .env.sample .env
+cp view/.env.sample view/.env
+cp api/.env.sample api/.env
 ```
+if you want to see what each variable is for [here](#environment-variables) you can refer this guide
+> [!NOTE]
+> The root `.env.sample` contains combined configurations for self-hosting. For development.
+> We use separate environment files for the API and frontend.
 
-5. Install project dependencies:
-
+#### Step 3: Set Up PostgreSQL Database using Docker:
 ```bash
-cd api
-go mod download
-
-cd ../view
-yarn install
+docker run -d \
+  --name nixopus-db \
+  --env-file ./api/.env \
+  -p 5432:5432 \
+  -v ./data:/var/lib/postgresql/data \
+  postgres:14-alpine
 ```
 
-6. Load development fixtures (optional but recommended):
-
+#### Step 4: Install Development Tools
+Install Air for hot reloading during backend development:
 ```bash
-cd ../api
-
-# Load fixtures without affecting existing data
-make fixtures-load
-
-# Or for a clean slate (drops and recreates tables)
-make fixtures-recreate
-
-# Get help on fixtures commands
-make fixtures-help
+go install github.com/air-verse/air@latest
 ```
 
-The fixtures system provides sample data including users, organizations, roles, permissions, and feature flags to help you get started quickly with development.
+#### Step 6: Install Project Dependencies
+
+**Backend Dependencies:**
+```bash
+cd api && go mod download
+```
+
+
+**Frontend Dependencies:**
+
+<CodeGroup :tabs="[
+      { label: 'npm', code: 'cd ../view && npm install' },
+      { label: 'yarn', code: 'cd ../view && yarn install' },
+      { label: 'pnpm', code: 'cd ../view && pnpm install' }
+      ]"
+/>
+
+#### Step 7: Load Development Fixtures (Recommended)
+The fixtures system provides sample data including users, organizations, roles, permissions, and feature flags to help you get started quickly. Learn how to use fixtures in our [Development Fixtures Guide](fixtures.md).
 
 ## Running the Application
 
-1. Start the API service:
+### Start the Backend API
 
 ```bash
-air
+cd ../api && air
 ```
 
-2. Start the view service:
+This will start the API server on port `8080`. If everything is set up correctly, it will automatically run database migrations.
 
-```bash
-cd ../view
-yarn dev
-```
+Verify the server is running by visiting [`http://localhost:8080/api/v1/health`](http://localhost:8080/api/v1/health) and you should see a **success** message.
 
-The view service uses:
+### Start the Frontend
+Open a new terminal and run:
 
-- Next.js 15 with App Router
-- React 19
-- Redux Toolkit for state management
-- Tailwind CSS for styling
-- Radix UI for accessible components (Shadcn Components)
-- TypeScript for type safety
+<CodeGroup :tabs="[
+      { label: 'npm', code: 'cd ./view && npm run dev' },
+      { label: 'yarn', code: 'cd ./view && yarn dev' },
+      { label: 'pnpm', code: 'cd ./view && pnpm dev' }
+      ]"
+/>
 
-## Making Changes
+The frontend will be available at [`http://localhost:3000`](http://localhost:3000).
 
-Nixopus follows [trunk-based-development](https://www.atlassian.com/continuous-delivery/continuous-integration/trunk-based-development) conventions.
+## Next Steps
 
-1. Create a new branch:
+Now that you have your development environment set up, here are the next steps for contributing:
 
-```bash
-git checkout -b feature/your-feature-name
-```
-
-2. Make your changes following the project structure:
-   - Place new features under `api/internal/features/`
-   - Add tests for new functionality
-   - Update migrations if needed
-   - Follow existing patterns for controllers, services, and storage
-   - For frontend changes, follow the Next.js app directory structure
-
-3. Run tests:
-
-```bash
-cd api
-make test
-
-# View linting
-cd view
-yarn lint
-```
-
-4. Commit your changes with clear messages.
-
-## Submitting a Pull Request
-
-1. Push your branch and create a pull request.
-
-2. Ensure your code:
-   - Follows the project structure
-   - Includes tests
-   - Updates documentation if needed
-   - Passes all CI checks
-
-3. Be prepared to address feedback.
-
-## Proposing New Features
-
-1. Check existing issues and pull requests.
-
-2. Create a new issue with the `Feature request` template.
-
-3. Include:
-   - Feature description
-   - Technical implementation details
-   - Impact on existing code
-
-## Extending Documentation
-
-Documentation is located in the `docs/` directory. Follow the existing structure and style when adding new content.
+* **Making Changes** - [Making Changes Guide](getting-involved/making-changes.md)
+* **Testing Your Changes** - [Testing Guide](getting-involved/making-changes.md)  
+* **Submitting a Pull Request** - [Pull Request Guide](getting-involved/proposing-changes.md)
+* **Proposing New Features** - [Feature Proposal Guide](getting-involved/proposing-changes.md)
+* **Extending Documentation** - [Documentation Guide](documentation/documentation.md)
 
 ## Gratitude
 
