@@ -187,6 +187,7 @@ Open a new terminal and run:
 />
 
 The frontend will be available at [`http://localhost:3000`](http://localhost:3000).
+:::
 
 ## Next Steps
 
