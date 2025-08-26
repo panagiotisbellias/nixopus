@@ -1,3 +1,17 @@
+# [0.1.0-alpha.14](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.13...v0.1.0-alpha.14) (2025-08-26)
+
+
+### Bug Fixes
+
+* staging compose file to match with the latest cli versioned installation structure ([ddcf648](https://github.com/raghavyuva/nixopus/commit/ddcf648ab07085179a023e44e0024e3838ac4423))
+
+
+### Features
+
+* upgrade Nixopus install script with detailed usage, extended CLI options ([#351](https://github.com/raghavyuva/nixopus/issues/351)) ([356eb25](https://github.com/raghavyuva/nixopus/commit/356eb2531ce0b8176128e44c5dadfd9bc08a344f))
+
+
+
 # [0.1.0-alpha.13](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.12...v0.1.0-alpha.13) (2025-08-24)
 
 
@@ -267,16 +281,6 @@
 ### Performance Improvements
 
 * **cache:** caching for feature flags, so every request will use the cache aside pattern  thus by decreasing the storage lookup time ([9fee21a](https://github.com/raghavyuva/nixopus/commit/9fee21a25b3a464aa51dee6cbd7fbc7bb7e66fd9))
-
-
-
-# [0.1.0-alpha.3](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.2...v0.1.0-alpha.3) (2025-04-19)
-
-
-### Features
-
-* **installation-script:** the bash script that will clone nixopus and runs our installer python package ([e75632b](https://github.com/raghavyuva/nixopus/commit/e75632b5eaefe42fc472c43eafc20559033240bc))
-* update installer scripts and validation ([b354087](https://github.com/raghavyuva/nixopus/commit/b354087ea3ea5df9bacd19472aec95d4ae5ce1aa))
 
 
 
