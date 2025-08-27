@@ -5,6 +5,7 @@ import {
   Server, 
   CreateServerRequest, 
   UpdateServerRequest, 
+  UpdateServerStatusRequest,
   DeleteServerRequest,
   CreateServerResponse,
   GetServersRequest,
@@ -62,6 +63,17 @@ export const serversApi = createApi({
         return response.data;
       }
     }),
+    updateServerStatus: builder.mutation<Server, UpdateServerStatusRequest>({
+      query: (data) => ({
+        url: SERVER_SETTINGS.UPDATE_SERVER_STATUS,
+        method: 'PATCH',
+        body: data
+      }),
+      invalidatesTags: [{ type: 'Servers', id: 'LIST' }, { type: 'Servers', id: 'ACTIVE' }],
+      transformResponse: (response: { data: Server }) => {
+        return response.data;
+      }
+    }),
     deleteServer: builder.mutation<null, DeleteServerRequest>({
       query: (data) => ({
         url: SERVER_SETTINGS.DELETE_SERVER,
@@ -72,6 +84,17 @@ export const serversApi = createApi({
       transformResponse: (response: { data: null }) => {
         return response.data;
       }
+    }),
+    getActiveServer: builder.query<Server | null, { organization_id: string }>({
+      query: ({ organization_id }) => ({
+        url: `${SERVER_SETTINGS.GET_SERVERS}?page=1&page_size=100`,
+        method: 'GET'
+      }),
+      providesTags: [{ type: 'Servers', id: 'ACTIVE' }],
+      transformResponse: (response: { data: ServerListResponse }) => {
+        const servers = response.data.servers as Server[];
+        return servers.find(server => server.status === 'active') || null;
+      }
     })
   })
 });
@@ -80,5 +103,7 @@ export const {
   useGetAllServersQuery,
   useCreateServerMutation,
   useUpdateServerMutation,
-  useDeleteServerMutation
+  useUpdateServerStatusMutation,
+  useDeleteServerMutation,
+  useGetActiveServerQuery
 } = serversApi;

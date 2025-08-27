@@ -9,22 +9,39 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Server } from '@/redux/types/server';
-import { useGetAllServersQuery } from '@/redux/services/settings/serversApi';
+import {
+  useGetAllServersQuery,
+  useGetActiveServerQuery,
+  useUpdateServerStatusMutation
+} from '@/redux/services/settings/serversApi';
 import { useAppSelector, useAppDispatch } from '@/redux/hooks';
-import { setActiveServer, setActiveServerId } from '@/redux/features/servers/serverSlice';
+import { setActiveServer, clearActiveServer } from '@/redux/features/servers/serverSlice';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ServerIcon } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 interface ServerSelectorProps {
   className?: string;
 }
 
+const getStatusLabel = (status: string) => {
+  switch (status) {
+    case 'active':
+      return 'Active';
+    case 'maintenance':
+      return 'Maintenance';
+    case 'inactive':
+    default:
+      return 'Inactive';
+  }
+};
+
 export function ServerSelector({ className }: ServerSelectorProps) {
   const dispatch = useAppDispatch();
   const activeOrg = useAppSelector((state) => state.user.activeOrganization);
-  const activeServerId = useAppSelector((state) => state.server.activeServerId);
-  
-  const { data: serverResponse, isLoading } = useGetAllServersQuery({
+  const activeServer = useAppSelector((state) => state.server.activeServer);
+
+  const { data: serverResponse, isLoading: isServersLoading } = useGetAllServersQuery({
     organization_id: activeOrg?.id || '',
     page: 1,
     page_size: 100,
@@ -32,22 +49,52 @@ export function ServerSelector({ className }: ServerSelectorProps) {
     sort_order: 'asc'
   });
 
+  const { data: apiActiveServer, isLoading: isActiveServerLoading } = useGetActiveServerQuery(
+    { organization_id: activeOrg?.id || '' },
+    { skip: !activeOrg?.id }
+  );
+
+  const [updateServerStatus] = useUpdateServerStatusMutation();
+
   const servers = serverResponse?.servers || [];
 
-  const handleServerChange = (value: string) => {
+  useEffect(() => {
+    if (apiActiveServer && (!activeServer || activeServer.id !== apiActiveServer.id)) {
+      dispatch(setActiveServer(apiActiveServer));
+    } else if (!apiActiveServer && activeServer) {
+      dispatch(clearActiveServer());
+    }
+  }, [apiActiveServer, activeServer, dispatch]);
+
+  const handleServerChange = async (value: string) => {
     if (value === 'default') {
-      dispatch(setActiveServerId(null));
+      if (activeServer) {
+        try {
+          await updateServerStatus({
+            id: activeServer.id,
+            status: 'inactive'
+          }).unwrap();
+          dispatch(clearActiveServer());
+        } catch (error) {
+          console.error('Failed to deactivate server:', error);
+        }
+      }
     } else {
       const selectedServer = servers.find((server: Server) => server.id === value);
       if (selectedServer) {
-        dispatch(setActiveServer(selectedServer));
-      } else {
-        dispatch(setActiveServerId(value));
+        try {
+          await updateServerStatus({
+            id: selectedServer.id,
+            status: 'active'
+          }).unwrap();
+        } catch (error) {
+          console.error('Failed to activate server:', error);
+        }
       }
     }
   };
 
-  if (isLoading) {
+  if (isServersLoading || isActiveServerLoading) {
     return <Skeleton className="h-9 w-[200px]" />;
   }
 
@@ -57,21 +104,32 @@ export function ServerSelector({ className }: ServerSelectorProps) {
 
   return (
     <Select
-      value={activeServerId || 'default'}
+      value={activeServer?.id || 'default'}
       onValueChange={handleServerChange}
     >
-      <SelectTrigger className={`w-[200px] ${className || ''}`}>
+      <SelectTrigger className={cn('w-[200px]', className)}>
         <div className="flex items-center gap-2">
           <ServerIcon className="h-4 w-4" />
-          <SelectValue placeholder="Select server" />
+          <SelectValue placeholder="Select server">
+            {activeServer ? (
+              <span>{activeServer.name}</span>
+            ) : (
+              'Default'
+            )}
+          </SelectValue>
         </div>
       </SelectTrigger>
       <SelectContent>
-        <SelectItem value="default">Default</SelectItem>
+        <SelectItem value="default">
+          <div className="flex items-center gap-2">
+            <span>Default</span>
+          </div>
+        </SelectItem>
         {servers.map((server: Server) => (
           <SelectItem key={server.id} value={server.id}>
             <div className="flex items-center gap-2">
               <span>{server.name}</span>
+              <span className="text-xs text-muted-foreground">{getStatusLabel(server.status)}</span>
             </div>
           </SelectItem>
         ))}

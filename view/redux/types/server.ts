@@ -1,3 +1,5 @@
+export type ServerStatus = 'active' | 'inactive' | 'maintenance';
+
 export interface Server {
   id: string;
   name: string;
@@ -7,6 +9,7 @@ export interface Server {
   username: string;
   ssh_password?: string;
   ssh_private_key_path?: string;
+  status: ServerStatus;
   created_at: string;
   updated_at: string;
   deleted_at?: string;
@@ -22,6 +25,7 @@ export interface CreateServerRequest {
   username: string;
   ssh_password?: string;
   ssh_private_key_path?: string;
+  status?: ServerStatus;
   organization_id: string;
 }
 
@@ -34,6 +38,12 @@ export interface UpdateServerRequest {
   username: string;
   ssh_password?: string;
   ssh_private_key_path?: string;
+  status?: ServerStatus;
+}
+
+export interface UpdateServerStatusRequest {
+  id: string;
+  status: ServerStatus;
 }
 
 export interface DeleteServerRequest {

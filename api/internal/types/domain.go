@@ -28,6 +28,7 @@ type Server struct {
 	Username          string        `json:"username" bun:"username,notnull"`
 	SSHPassword       *string       `json:"ssh_password,omitempty" bun:"ssh_password"`
 	SSHPrivateKeyPath *string       `json:"ssh_private_key_path,omitempty" bun:"ssh_private_key_path"`
+	Status            string        `json:"status" bun:"status,notnull,default:'inactive'"`
 	CreatedAt         time.Time     `json:"created_at" bun:"created_at,notnull,default:current_timestamp"`
 	UpdatedAt         time.Time     `json:"updated_at" bun:"updated_at,notnull,default:current_timestamp"`
 	DeletedAt         *time.Time    `json:"deleted_at,omitempty" bun:"deleted_at"`

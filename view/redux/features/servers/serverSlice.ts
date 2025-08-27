@@ -1,5 +1,6 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { Server } from '@/redux/types/server';
+import { serversApi } from '@/redux/services/settings/serversApi';
 
 interface ServerState {
   activeServer: Server | null;
@@ -29,6 +30,28 @@ export const serverSlice = createSlice({
       state.activeServer = null;
       state.activeServerId = null;
     }
+  },
+  extraReducers: (builder) => {
+    builder
+      .addMatcher(
+        serversApi.endpoints.getActiveServer.matchFulfilled,
+        (state, action) => {
+          state.activeServer = action.payload;
+          state.activeServerId = action.payload?.id || null;
+        }
+      )
+      .addMatcher(
+        serversApi.endpoints.updateServerStatus.matchFulfilled,
+        (state, action) => {
+          if (action.payload.status === 'active') {
+            state.activeServer = action.payload;
+            state.activeServerId = action.payload.id;
+          } else if (state.activeServerId === action.payload.id) {
+            state.activeServer = null;
+            state.activeServerId = null;
+          }
+        }
+      );
   }
 });
 

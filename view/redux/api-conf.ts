@@ -130,5 +130,6 @@ export enum SERVER_SETTINGS {
   CREATE_SERVER = 'v1/server',
   GET_SERVERS = 'v1/servers',
   UPDATE_SERVER = 'v1/server',
+  UPDATE_SERVER_STATUS = 'v1/server/status',
   DELETE_SERVER = 'v1/server'
 }

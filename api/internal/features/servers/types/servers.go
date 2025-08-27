@@ -38,6 +38,8 @@ var (
 	ErrMissingSSHAuth                          = errors.New("either ssh_password or ssh_private_key_path is required")
 	ErrBothSSHAuthProvided                     = errors.New("provide either ssh_password or ssh_private_key_path, not both")
 	ErrInvalidSSHPrivateKeyPath                = errors.New("invalid ssh private key path")
+	ErrMissingStatus                           = errors.New("status is required")
+	ErrInvalidStatus                           = errors.New("invalid status")
 )
 
 type CreateServerRequest struct {
@@ -48,6 +50,7 @@ type CreateServerRequest struct {
 	Username          string    `json:"username"`
 	SSHPassword       *string   `json:"ssh_password,omitempty"`
 	SSHPrivateKeyPath *string   `json:"ssh_private_key_path,omitempty"`
+	Status            *string   `json:"status,omitempty"`
 	OrganizationID    uuid.UUID `json:"organization_id"`
 }
 
@@ -60,6 +63,12 @@ type UpdateServerRequest struct {
 	Username          string  `json:"username"`
 	SSHPassword       *string `json:"ssh_password,omitempty"`
 	SSHPrivateKeyPath *string `json:"ssh_private_key_path,omitempty"`
+	Status            *string `json:"status,omitempty"`
+}
+
+type UpdateServerStatusRequest struct {
+	ID     string `json:"id"`
+	Status string `json:"status"`
 }
 
 type DeleteServerRequest struct {

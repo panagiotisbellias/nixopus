@@ -141,6 +141,8 @@ func (v *Validator) ValidateRequest(req interface{}) error {
 		return v.ValidateCreateServerRequest(*r)
 	case *types.UpdateServerRequest:
 		return v.ValidateUpdateServerRequest(*r)
+	case *types.UpdateServerStatusRequest:
+		return v.ValidateUpdateServerStatusRequest(*r)
 	case *types.DeleteServerRequest:
 		return v.ValidateDeleteServerRequest(*r)
 	default:
@@ -213,4 +215,31 @@ func (v *Validator) ValidateDeleteServerRequest(req types.DeleteServerRequest) e
 	}
 
 	return nil
+}
+
+func (v *Validator) ValidateUpdateServerStatusRequest(req types.UpdateServerStatusRequest) error {
+	if err := v.ValidateID(req.ID); err != nil {
+		return err
+	}
+
+	if err := v.ValidateStatus(req.Status); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (v *Validator) ValidateStatus(status string) error {
+	if status == "" {
+		return types.ErrMissingStatus
+	}
+
+	validStatuses := []string{"active", "inactive", "maintenance"}
+	for _, validStatus := range validStatuses {
+		if status == validStatus {
+			return nil
+		}
+	}
+
+	return types.ErrInvalidStatus
 }

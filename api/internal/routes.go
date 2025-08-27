@@ -434,6 +434,7 @@ func (router *Router) ServerRoutes(s *fuego.Server, serverController *serverCont
 	fuego.Post(s, "", serverController.CreateServer)
 	fuego.Get(s, "", serverController.GetServer)
 	fuego.Put(s, "", serverController.UpdateServer)
+	fuego.Patch(s, "/status", serverController.UpdateServerStatus)
 	fuego.Delete(s, "", serverController.DeleteServer)
 }
 

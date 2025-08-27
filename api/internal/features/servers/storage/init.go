@@ -19,6 +19,7 @@ type ServerStorageInterface interface {
 	CreateServer(server *shared_types.Server) error
 	GetServer(id string) (*shared_types.Server, error)
 	UpdateServer(ID string, Name string) error
+	UpdateServerStatus(ID string, Status string) error
 	DeleteServer(server *shared_types.Server) error
 	GetServers(OrganizationID string, UserID uuid.UUID) ([]shared_types.Server, error)
 	GetServersPaginated(OrganizationID string, UserID uuid.UUID, queryParams *types.ServerQueryParams) ([]shared_types.Server, error)
@@ -75,6 +76,18 @@ func (s *ServerStorage) UpdateServer(ID string, Name string) error {
 	}
 	server.Name = Name
 	_, err = s.getDB().NewUpdate().Model(&server).Where("id = ? AND deleted_at IS NULL", ID).Exec(s.Ctx)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (s *ServerStorage) UpdateServerStatus(ID string, Status string) error {
+	_, err := s.getDB().NewUpdate().
+		Model((*shared_types.Server)(nil)).
+		Set("status = ?, updated_at = NOW()", Status).
+		Where("id = ? AND deleted_at IS NULL", ID).
+		Exec(s.Ctx)
 	if err != nil {
 		return err
 	}

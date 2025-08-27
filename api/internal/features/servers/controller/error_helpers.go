@@ -17,7 +17,9 @@ func isInvalidServerError(err error) bool {
 		types.ErrMissingUsername,
 		types.ErrMissingSSHAuth,
 		types.ErrBothSSHAuthProvided,
-		types.ErrInvalidSSHPrivateKeyPath:
+		types.ErrInvalidSSHPrivateKeyPath,
+		types.ErrMissingStatus,
+		types.ErrInvalidStatus:
 		return true
 	default:
 		return false
