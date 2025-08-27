@@ -8,8 +8,37 @@ import (
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
 	"github.com/raghavyuva/nixopus-api/internal/features/servers/types"
 	"github.com/raghavyuva/nixopus-api/internal/features/servers/validation"
+	"github.com/raghavyuva/nixopus-api/internal/features/ssh"
 	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 )
+
+func (s *ServersService) verifySSHConnection(req types.CreateServerRequest) error {
+	s.logger.Log(logger.Info, "verifying SSH connection", fmt.Sprintf("host=%s, port=%d, user=%s", req.Host, req.Port, req.Username))
+
+	sshClient := &ssh.SSH{
+		Host: req.Host,
+		User: req.Username,
+		Port: uint(req.Port),
+	}
+
+	if req.SSHPassword != nil && *req.SSHPassword != "" {
+		sshClient.Password = *req.SSHPassword
+	}
+
+	if req.SSHPrivateKeyPath != nil && *req.SSHPrivateKeyPath != "" {
+		sshClient.PrivateKey = *req.SSHPrivateKeyPath
+	}
+
+	client, err := sshClient.Connect()
+	if err != nil {
+		s.logger.Log(logger.Error, "SSH connection verification failed", fmt.Sprintf("host=%s, port=%d, user=%s, error=%s", req.Host, req.Port, req.Username, err.Error()))
+		return err
+	}
+	defer client.Close()
+
+	s.logger.Log(logger.Info, "SSH connection verified successfully", fmt.Sprintf("host=%s, port=%d, user=%s", req.Host, req.Port, req.Username))
+	return nil
+}
 
 // CreateServer creates a new server in the application.
 //
@@ -35,6 +64,11 @@ func (s *ServersService) CreateServer(req types.CreateServerRequest, userID stri
 
 	validator := validation.NewValidator(s.storage)
 	if err := validator.ValidateCreateServerRequest(req); err != nil {
+		return types.CreateServerResponse{}, err
+	}
+
+	if err := s.verifySSHConnection(req); err != nil {
+		s.logger.Log(logger.Error, "SSH connection verification failed", err.Error())
 		return types.CreateServerResponse{}, err
 	}
 

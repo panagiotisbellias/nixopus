@@ -39,6 +39,8 @@ var (
 	ErrMissingSSHAuth                          = errors.New("either ssh_password or ssh_private_key_path is required")
 	ErrBothSSHAuthProvided                     = errors.New("provide either ssh_password or ssh_private_key_path, not both")
 	ErrInvalidSSHPrivateKeyPath                = errors.New("invalid ssh private key path")
+	ErrSSHConnectionFailed                     = errors.New("failed to establish SSH connection")
+	ErrSSHAuthenticationFailed                 = errors.New("SSH authentication failed")
 	ErrMissingStatus                           = errors.New("status is required")
 	ErrInvalidStatus                           = errors.New("invalid status")
 )
