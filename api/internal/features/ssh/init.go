@@ -1,12 +1,14 @@
 package ssh
 
 import (
+	"context"
 	"fmt"
+	"log"
 	"os"
-	"strconv"
 
 	"github.com/melbahja/goph"
 	"github.com/raghavyuva/nixopus-api/internal/config"
+	"github.com/raghavyuva/nixopus-api/internal/types"
 	"golang.org/x/crypto/ssh"
 	"golang.org/x/crypto/ssh/terminal"
 )
@@ -29,6 +31,76 @@ func NewSSH() *SSH {
 		Port:                config.AppConfig.SSH.Port,
 		Password:            config.AppConfig.SSH.Password,
 		PrivateKeyProtected: config.AppConfig.SSH.PrivateKeyProtected,
+	}
+}
+
+// NewSSHWithContext creates SSH client that's aware of request context
+// If a server is found in context, it uses that server's SSH config
+// Otherwise falls back to default config
+func NewSSHWithContext(ctx context.Context) *SSH {
+	// Check if there's a server in the context
+	if server := getServerFromContext(ctx); server != nil {
+		log.Printf("Server found in context: %v\n", server)
+		return &SSH{
+			PrivateKey: getStringValue(server.SSHPrivateKeyPath),
+			Host:       server.Host,
+			User:       server.Username,
+			Port:       uint(server.Port),
+			Password:   getStringValue(server.SSHPassword),
+		}
+	}
+	log.Printf("No server found in context, using default config")
+	// Fallback to default config
+	return NewSSH()
+}
+
+// NewSSHWithServer creates SSH client with specific server configuration
+// If a server is provided, it uses that server's SSH config
+// Otherwise falls back to default config
+func NewSSHWithServer(server *types.Server) *SSH {
+	// Check if server is provided
+	if server != nil {
+		log.Printf("Using server SSH config: %s@%s:%d", server.Username, server.Host, server.Port)
+		return &SSH{
+			PrivateKey: getStringValue(server.SSHPrivateKeyPath),
+			Host:       server.Host,
+			User:       server.Username,
+			Port:       uint(server.Port),
+			Password:   getStringValue(server.SSHPassword),
+		}
+	}
+	log.Printf("No server provided, using default SSH config")
+	// Fallback to default config
+	return NewSSH()
+}
+
+// Helper function to safely get string value from pointer
+func getStringValue(ptr *string) string {
+	if ptr != nil {
+		return *ptr
+	}
+	return ""
+}
+
+// Helper function to extract server from context
+func getServerFromContext(ctx context.Context) *types.Server {
+	if server := ctx.Value(types.ServerIDKey); server != nil {
+		if s, ok := server.(*types.Server); ok {
+			return s
+		}
+	}
+	return nil
+}
+
+// NewSSHFromConfig creates SSH client from custom config (for server-specific connections)
+func NewSSHFromConfig(sshConfig *types.SSHConfig) *SSH {
+	return &SSH{
+		PrivateKey:          sshConfig.PrivateKey,
+		Host:                sshConfig.Host,
+		User:                sshConfig.User,
+		Port:                sshConfig.Port,
+		Password:            sshConfig.Password,
+		PrivateKeyProtected: sshConfig.PrivateKeyProtected,
 	}
 }
 
@@ -71,17 +143,6 @@ func (s *SSH) Connect() (*goph.Client, error) {
 	}
 
 	return client, nil
-}
-
-func parsePort(port string) uint64 {
-	if port == "" {
-		return 22
-	}
-	p, err := strconv.ParseUint(port, 10, 32)
-	if err != nil {
-		return 22
-	}
-	return p
 }
 
 func (s *SSH) ConnectWithPrivateKey() (*goph.Client, error) {

@@ -98,6 +98,24 @@ func AuthMiddleware(next http.Handler, app *storage.App, cache *cache.Cache) htt
 			}
 
 			ctx = context.WithValue(ctx, types.OrganizationIDKey, organizationID)
+
+			// Handle X-SERVER-ID header if present
+			// Useful in case of multi-server setup
+			serverID := r.Header.Get("X-SERVER-ID")
+			if serverID != "" {
+				server, err := utils.ValidateServerAccess(app.Store.DB, ctx, user.ID.String(), serverID)
+				if err != nil {
+					utils.SendErrorResponse(w, "Error verifying server access", http.StatusForbidden)
+					return
+				}
+
+				if server == nil {
+					utils.SendErrorResponse(w, "Server not found", http.StatusNotFound)
+					return
+				}
+
+				ctx = context.WithValue(ctx, types.ServerIDKey, server)
+			}
 		}
 
 		r = r.WithContext(ctx)

@@ -11,6 +11,7 @@ import (
 	"github.com/melbahja/goph"
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
 	sshpkg "github.com/raghavyuva/nixopus-api/internal/features/ssh"
+	"github.com/raghavyuva/nixopus-api/internal/types"
 	"golang.org/x/crypto/ssh"
 )
 
@@ -43,8 +44,8 @@ type Terminal struct {
 	TerminalId string
 }
 
-func NewTerminal(conn *websocket.Conn, log *logger.Logger, terminalId string) (*Terminal, error) {
-	ssh_client := sshpkg.NewSSH()
+func NewTerminal(conn *websocket.Conn, log *logger.Logger, terminalId string, server *types.Server) (*Terminal, error) {
+	ssh_client := sshpkg.NewSSHWithServer(server)
 	terminal := &Terminal{
 		ssh:        ssh_client,
 		conn:       conn,

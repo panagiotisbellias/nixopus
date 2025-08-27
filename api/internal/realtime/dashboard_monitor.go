@@ -2,6 +2,7 @@ package realtime
 
 import (
 	"encoding/json"
+	"log"
 	"time"
 
 	"github.com/gorilla/websocket"
@@ -17,7 +18,7 @@ import (
 //	conn - the *websocket.Conn representing the client connection.
 //
 // Returns:
-func (s *SocketServer) handleStopDashboardMonitor(conn *websocket.Conn) {
+func (s *SocketServer) handleStopDashboardMonitor(conn *websocket.Conn, server *types.Server) {
 	s.dashboardMutex.Lock()
 	defer s.dashboardMutex.Unlock()
 	if monitor, exists := s.dashboardMonitors[conn]; exists {
@@ -40,11 +41,17 @@ func (s *SocketServer) handleStopDashboardMonitor(conn *websocket.Conn) {
 //
 // Returns:
 //   - nil
-func (s *SocketServer) handleDashboardMonitor(conn *websocket.Conn, msg types.Payload) {
+func (s *SocketServer) handleDashboardMonitor(conn *websocket.Conn, msg types.Payload, server *types.Server) {
+	if server != nil {
+		log.Printf("handleDashboardMonitor called with server: %s@%s:%d", server.Username, server.Host, server.Port)
+	} else {
+		log.Printf("handleDashboardMonitor called with nil server (default)")
+	}
+
 	s.dashboardMutex.Lock()
 	monitor, exists := s.dashboardMonitors[conn]
 	if !exists {
-		newMonitor, err := dashboard.NewDashboardMonitor(conn, logger.NewLogger())
+		newMonitor, err := dashboard.NewDashboardMonitor(conn, logger.NewLogger(), server)
 		if err != nil {
 			s.dashboardMutex.Unlock()
 			s.sendError(conn, "Failed to create dashboard monitor")

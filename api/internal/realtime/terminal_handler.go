@@ -13,7 +13,7 @@ import (
 //
 //	conn - the *websocket.Conn representing the client connection.
 //	msg - the types.Payload representing the message from the client.
-func (s *SocketServer) handleTerminal(conn *websocket.Conn, msg types.Payload) {
+func (s *SocketServer) handleTerminal(conn *websocket.Conn, msg types.Payload, server *types.Server) {
 	s.terminalMutex.Lock()
 	defer s.terminalMutex.Unlock()
 
@@ -40,7 +40,7 @@ func (s *SocketServer) handleTerminal(conn *websocket.Conn, msg types.Payload) {
 
 	term, exists := s.terminals[conn][terminalId]
 	if !exists {
-		newTerminal, err := terminal.NewTerminal(conn, &logger.Logger{}, terminalId)
+		newTerminal, err := terminal.NewTerminal(conn, &logger.Logger{}, terminalId, server)
 		if err != nil {
 			s.sendError(conn, "Failed to start terminal")
 			return
@@ -59,7 +59,7 @@ func (s *SocketServer) handleTerminal(conn *websocket.Conn, msg types.Payload) {
 //
 //	conn - the *websocket.Conn representing the client connection.
 //	msg - the types.Payload representing the message from the client.
-func (s *SocketServer) handleTerminalResize(conn *websocket.Conn, msg types.Payload) {
+func (s *SocketServer) handleTerminalResize(conn *websocket.Conn, msg types.Payload, server *types.Server) {
 	s.terminalMutex.Lock()
 	defer s.terminalMutex.Unlock()
 

@@ -13,7 +13,7 @@ import (
 //
 //	conn - the *websocket.Conn representing the client connection.
 //	user - the *types.User representing the authenticated user.
-func (s *SocketServer) readLoop(conn *websocket.Conn) {
+func (s *SocketServer) readLoop(conn *websocket.Conn, server *types.Server) {
 	for {
 		_, message, err := conn.ReadMessage()
 		if err != nil {
@@ -40,16 +40,16 @@ func (s *SocketServer) readLoop(conn *websocket.Conn) {
 			s.handleUnsubscribe(conn, msg)
 
 		case types.TERMINAL:
-			s.handleTerminal(conn, msg)
+			s.handleTerminal(conn, msg, server)
 
 		case types.TERMINAL_RESIZE:
-			s.handleTerminalResize(conn, msg)
+			s.handleTerminalResize(conn, msg, server)
 
 		case types.DASHBOARD_MONITOR:
-			s.handleDashboardMonitor(conn, msg)
+			s.handleDashboardMonitor(conn, msg, server)
 
 		case types.STOP_DASHBOARD_MONITOR:
-			s.handleStopDashboardMonitor(conn)
+			s.handleStopDashboardMonitor(conn, server)
 
 		case types.MONITOR_APPLICATION:
 			// s.handleMonitorApplication(conn, msg, user)

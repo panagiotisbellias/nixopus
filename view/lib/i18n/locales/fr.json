@@ -1249,7 +1249,8 @@
     "team": "Équipe",
     "domains": "Domaines",
     "update": "Mettre à jour",
-    "containers": "Conteneurs"
+    "containers": "Conteneurs",
+    "servers":"Servers"
   },
   "layout": {
     "breadcrumbs": {

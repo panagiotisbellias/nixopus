@@ -1255,6 +1255,7 @@
     "team": "Equipo",
     "domains": "Dominios",
     "containers": "Contenedores",
+    "servers":"Servers",
     "layout": {
       "breadcrumbs": {
         "home": "Inicio",

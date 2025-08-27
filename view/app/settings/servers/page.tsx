@@ -1,15 +1,67 @@
 'use client';
-import React from 'react';
+import React, { useState } from 'react';
 import DashboardPageHeader from '@/components/layout/dashboard-page-header';
+import { ResourceGuard } from '@/components/rbac/PermissionGuard';
+import { Skeleton } from '@/components/ui/skeleton';
+import { useGetAllServersQuery } from '@/redux/services/settings/serversApi';
+import { GetServersRequest } from '@/redux/types/server';
+import CreateServerDialog from './components/create-server';
+import ServersTable from './components/servers-table';
 
 function Page() {
+  const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const [queryParams, setQueryParams] = useState<GetServersRequest>({
+    organization_id: '',
+    page: 1,
+    page_size: 10,
+    search: '',
+    sort_by: 'created_at',
+    sort_order: 'desc'
+  });
+
+  const { data: serverResponse, isLoading, error } = useGetAllServersQuery(queryParams);
+
+  const handleQueryChange = (newParams: Partial<GetServersRequest>) => {
+    setQueryParams(prev => ({ ...prev, ...newParams }));
+  };
+
   return (
-    <div className="container mx-auto py-6 space-y-8 max-w-4xl">
-      <DashboardPageHeader
-        label="Server Settings"
-        description="Manage your servers and their configurations"
-      />
-    </div>
+    <ResourceGuard 
+      resource="server" 
+      action="read"
+      loadingFallback={<Skeleton className="h-96" />}
+    >
+      <div className="container mx-auto py-6 space-y-8 max-w-6xl">
+        <div className="flex justify-between items-center">
+          <DashboardPageHeader
+            label="Servers"
+            description=""
+          />
+          <ResourceGuard resource="server" action="create">
+            <CreateServerDialog 
+              open={createDialogOpen} 
+              setOpen={setCreateDialogOpen}
+            />
+          </ResourceGuard>
+        </div>
+
+        <div className="space-y-6">
+          {error ? (
+            <div className="text-center py-12">
+              <p className="text-destructive">Failed to load servers. Please try again.</p>
+            </div>
+          ) : (
+            <ServersTable 
+              servers={serverResponse?.servers || []} 
+              pagination={serverResponse?.pagination}
+              isLoading={isLoading}
+              queryParams={queryParams}
+              onQueryChange={handleQueryChange}
+            />
+          )}
+        </div>
+      </div>
+    </ResourceGuard>
   );
 }
 

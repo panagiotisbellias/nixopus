@@ -2,7 +2,6 @@ package service
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/melbahja/goph"
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
@@ -11,19 +10,16 @@ import (
 
 type FileManagerService struct {
 	logger logger.Logger
-	Ctx    context.Context
-	sshpkg *goph.Client
 }
 
 func NewFileManagerService(ctx context.Context, logger logger.Logger) *FileManagerService {
-	client, err := ssh.NewSSH().Connect()
-	if err != nil {
-		fmt.Printf("Failed to create ssh client in file manager")
-		return &FileManagerService{}
-	}
 	return &FileManagerService{
 		logger: logger,
-		Ctx:    ctx,
-		sshpkg: client,
 	}
+}
+
+// getSSHClient creates SSH connection based on request context
+func (s *FileManagerService) getSSHClient(ctx context.Context) (*goph.Client, error) {
+	sshClient := ssh.NewSSHWithContext(ctx)
+	return sshClient.Connect()
 }

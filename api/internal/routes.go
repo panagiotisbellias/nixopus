@@ -33,6 +33,7 @@ import (
 	permissions_storage "github.com/raghavyuva/nixopus-api/internal/features/permission/storage"
 	role_service "github.com/raghavyuva/nixopus-api/internal/features/role/service"
 	role_storage "github.com/raghavyuva/nixopus-api/internal/features/role/storage"
+	serverController "github.com/raghavyuva/nixopus-api/internal/features/servers/controller"
 	update "github.com/raghavyuva/nixopus-api/internal/features/update/controller"
 	update_service "github.com/raghavyuva/nixopus-api/internal/features/update/service"
 	user "github.com/raghavyuva/nixopus-api/internal/features/user/controller"
@@ -244,6 +245,24 @@ func (router *Router) Routes() {
 	})
 	router.ContainerRoutes(containerGroup, containerController)
 
+	serversController := serverController.NewServersController(router.app.Store, router.app.Ctx, l, notificationManager)
+	serverGroup := fuego.Group(server, apiV1.Path+"/server")
+	serversAllGroup := fuego.Group(server, apiV1.Path+"/servers")
+	fuego.Use(serverGroup, func(next http.Handler) http.Handler {
+		return middleware.RBACMiddleware(next, router.app, "server")
+	})
+	fuego.Use(serversAllGroup, func(next http.Handler) http.Handler {
+		return middleware.RBACMiddleware(next, router.app, "server")
+	})
+	fuego.Use(serverGroup, func(next http.Handler) http.Handler {
+		return middleware.FeatureFlagMiddleware(next, router.app, "server", router.cache)
+	})
+	fuego.Use(serversAllGroup, func(next http.Handler) http.Handler {
+		return middleware.FeatureFlagMiddleware(next, router.app, "server", router.cache)
+	})
+	router.ServerRoutes(serverGroup, serversController)
+	router.ServersRoutes(serversAllGroup, serversController)
+
 	log.Printf("Server starting on port %s", PORT)
 	log.Printf("Swagger UI available at: http://localhost:%s/swagger/", PORT)
 	server.Run()
@@ -409,4 +428,15 @@ func (router *Router) ContainerRoutes(s *fuego.Server, containerController *cont
 	fuego.Post(s, "/prune/build-cache", containerController.PruneBuildCache)
 	fuego.Post(s, "/prune/images", containerController.PruneImages)
 	fuego.Post(s, "/images", containerController.ListImages)
+}
+
+func (router *Router) ServerRoutes(s *fuego.Server, serverController *serverController.ServersController) {
+	fuego.Post(s, "", serverController.CreateServer)
+	fuego.Get(s, "", serverController.GetServer)
+	fuego.Put(s, "", serverController.UpdateServer)
+	fuego.Delete(s, "", serverController.DeleteServer)
+}
+
+func (router *Router) ServersRoutes(s *fuego.Server, serverController *serverController.ServersController) {
+	fuego.Get(s, "", serverController.GetServers)
 }

@@ -17,6 +17,7 @@ export type Resource =
   | 'github-connector'
   | 'container'
   | 'terminal'
+  | "server"
   | 'update';
 
 export type Action = 'create' | 'read' | 'update' | 'delete';

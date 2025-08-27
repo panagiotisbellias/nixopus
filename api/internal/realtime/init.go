@@ -9,11 +9,13 @@ import (
 	"sync"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
 	"github.com/joho/godotenv"
 	"github.com/raghavyuva/nixopus-api/internal/features/dashboard"
 	deploy "github.com/raghavyuva/nixopus-api/internal/features/deploy/controller"
 	"github.com/raghavyuva/nixopus-api/internal/features/deploy/realtime"
+	server_storage "github.com/raghavyuva/nixopus-api/internal/features/servers/storage"
 	"github.com/raghavyuva/nixopus-api/internal/features/terminal"
 	"github.com/raghavyuva/nixopus-api/internal/types"
 	"github.com/uptrace/bun"
@@ -123,11 +125,44 @@ func (s *SocketServer) HandleHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	serverID := r.URL.Query().Get("server")
+	var server *types.Server
+	log.Printf("Server ID: %s", serverID)
+	// if serverID is provided, we need to verify if the user has access to the server
+	if serverID != "" {
+		_, err := uuid.Parse(serverID)
+		if err != nil {
+			log.Printf("Error parsing server ID: %v", err)
+			return
+		}
+
+		serverStorage := server_storage.ServerStorage{
+			DB:  s.db,
+			Ctx: s.ctx,
+		}
+
+		server, err = serverStorage.GetServer(serverID)
+		if err != nil {
+			log.Printf("Error fetching server: %v", err)
+			return
+		}
+
+		if server == nil {
+			log.Printf("Server not found")
+			return
+		}
+
+		if server.UserID != user.ID {
+			log.Printf("User does not have access to server")
+			return
+		}
+	}
+
 	s.conns.Store(conn, user.ID)
 	defer s.handleDisconnect(conn)
 
 	log.Printf("User authenticated: %s", user.ID)
-	s.readLoop(conn)
+	s.readLoop(conn, server)
 }
 
 // handleDisconnect handles the disconnection of a client.

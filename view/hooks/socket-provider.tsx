@@ -1,6 +1,8 @@
 'use client';
 import { getToken } from '@/lib/auth';
 import { getWebsocketUrl } from '@/redux/conf';
+import { RootState } from '@/redux/store';
+import { useSelector } from 'react-redux';
 import { createContext, useContext, useEffect, useRef, useState, ReactNode } from 'react';
 
 type WebSocketContextValue = {
@@ -36,7 +38,9 @@ export const WebSocketProvider = ({
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const reconnectAttemptsRef = useRef(0);
   const isConnectingRef = useRef(false);
-
+  
+  const activeServerId = useSelector((state: RootState) => state.server.activeServerId);
+  
   const connectWebSocket = async () => {
     if (isConnectingRef.current) {
       console.log('Connection already in progress, skipping');
@@ -68,10 +72,14 @@ export const WebSocketProvider = ({
     }
 
     isConnectingRef.current = true;
-    console.log('Initiating WebSocket connection...');
 
     try {
-      const wsUrl = url || (await getWebsocketUrl()) + '?token=' + getToken();
+      const baseUrl = url || (await getWebsocketUrl());
+      const token = getToken();
+      const wsUrl = activeServerId 
+        ? `${baseUrl}?token=${token}&server=${activeServerId}`
+        : `${baseUrl}?token=${token}`;
+      
       const socket = new WebSocket(wsUrl);
 
       socket.onopen = () => {
@@ -135,7 +143,7 @@ export const WebSocketProvider = ({
     }
 
     connectWebSocket();
-  }, []);
+  }, [activeServerId]);
 
   useEffect(() => {
     if (!wsRef.current) {
@@ -164,7 +172,7 @@ export const WebSocketProvider = ({
     if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
       wsRef.current.send(data);
     } else {
-      console.warn('Cannot send message, WebSocket is not connected');
+      console.warn('Cannot send message, WebSocket is not connected. ReadyState:', wsRef.current?.readyState);
     }
   };
 
@@ -172,7 +180,15 @@ export const WebSocketProvider = ({
     if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
       wsRef.current.send(JSON.stringify(data));
     } else {
-      console.warn('Cannot send message, WebSocket is not connected');
+      console.warn('Cannot send message, WebSocket is not connected. ReadyState:', wsRef.current?.readyState);
+      // Retry after a short delay if WebSocket is connecting
+      if (wsRef.current && wsRef.current.readyState === WebSocket.CONNECTING) {
+        setTimeout(() => {
+          if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+            wsRef.current.send(JSON.stringify(data));
+          }
+        }, 100);
+      }
     }
   };
 

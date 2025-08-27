@@ -30,6 +30,7 @@ const customBaseQuery: BaseQueryFn<string | FetchArgs, unknown, FetchBaseQueryEr
       const organizationId =
         (getState() as RootState).user.activeOrganization?.id ||
         (getState() as RootState).auth.user?.organization_users?.[0]?.organization_id;
+      const activeServerId = (getState() as RootState).server?.activeServerId;
 
       if (token) {
         headers.set('authorization', `Bearer ${token}`);
@@ -38,6 +39,11 @@ const customBaseQuery: BaseQueryFn<string | FetchArgs, unknown, FetchBaseQueryEr
       if (organizationId) {
         headers.set('X-Organization-Id', organizationId);
       }
+
+      if (activeServerId) {
+        headers.set('X-SERVER-ID', activeServerId);
+      }
+      
       return headers;
     },
     credentials: 'include'

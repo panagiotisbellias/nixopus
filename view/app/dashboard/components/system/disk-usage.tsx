@@ -70,8 +70,12 @@ const DiskUsageCard: React.FC<DiskUsageCardProps> = ({ systemStats }) => {
               <TableBody>
                 {disk.allMounts.map((mount, index) => (
                   <TableRow key={index} className='border-0'>
-                    <TableCell>
-                      <TypographySmall className="text-xs">{mount.mountPoint}</TypographySmall>
+                    <TableCell className="">
+                      <div className="w-[80px] sm:w-[100px] overflow-hidden text-ellipsis whitespace-nowrap" title={mount.mountPoint}>
+                        <TypographySmall className="text-xs">
+                          {mount.mountPoint}
+                        </TypographySmall>
+                      </div>
                     </TableCell>
                     <TableCell>
                       <TypographySmall className="text-xs">{mount.size}</TypographySmall>
@@ -137,7 +141,7 @@ const DiskUsageCardSkeleton = () => {
               <tbody className="text-xxs sm:text-xs">
                 <tr>
                   <td className="text-left pr-1 sm:pr-2">
-                    <Skeleton className="h-3 w-10" />
+                    <Skeleton className="h-3 w-16 sm:w-20" />
                   </td>
                   <td className="text-right pr-1 sm:pr-2">
                     <Skeleton className="h-3 w-10" />

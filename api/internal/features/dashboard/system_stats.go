@@ -9,10 +9,6 @@ import (
 	"time"
 
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
-	"github.com/shirou/gopsutil/v3/cpu"
-	"github.com/shirou/gopsutil/v3/disk"
-	"github.com/shirou/gopsutil/v3/host"
-	"github.com/shirou/gopsutil/v3/mem"
 )
 
 const (
@@ -20,35 +16,23 @@ const (
 	bytesInGB = 1024 * 1024 * 1024
 )
 
-func formatBytes(bytes uint64, unit string) string {
-	switch unit {
-	case "MB":
-		return fmt.Sprintf("%.2f MB", float64(bytes)/bytesInMB)
-	case "GB":
-		return fmt.Sprintf("%.2f GB", float64(bytes)/bytesInGB)
-	default:
-		return fmt.Sprintf("%d bytes", bytes)
-	}
-}
-
 func (m *DashboardMonitor) GetSystemStats() {
-	osType, err := m.getCommandOutput("uname -s")
-	if err != nil {
-		m.BroadcastError(err.Error(), GetSystemStats)
-		return
-	}
-	osType = strings.TrimSpace(osType)
-
 	stats := SystemStats{
-		OSType:    osType,
 		Timestamp: time.Now(),
 		Memory:    MemoryStats{},
 		Load:      LoadStats{},
 		Disk:      DiskStats{AllMounts: []DiskMount{}},
 	}
 
-	if hostInfo, err := host.Info(); err == nil {
-		stats.Load.Uptime = time.Duration(hostInfo.Uptime * uint64(time.Second)).String()
+	if osType, err := m.getCommandOutput("uname -s"); err == nil {
+		stats.OSType = strings.TrimSpace(osType)
+	} else {
+		m.BroadcastError(err.Error(), GetSystemStats)
+		return
+	}
+
+	if cpuInfo, err := m.getCommandOutput("cat /proc/cpuinfo | grep 'model name' | head -1 | cut -d ':' -f2"); err == nil {
+		stats.CPUInfo = strings.TrimSpace(cpuInfo)
 	}
 
 	if loadAvg, err := m.getCommandOutput("uptime"); err == nil {
@@ -56,51 +40,12 @@ func (m *DashboardMonitor) GetSystemStats() {
 		stats.Load = parseLoadAverage(loadAvgStr)
 	}
 
-	if cpuInfo, err := cpu.Info(); err == nil && len(cpuInfo) > 0 {
-		stats.CPUInfo = cpuInfo[0].ModelName
+	if memInfo, err := m.getCommandOutput("free -b"); err == nil {
+		stats.Memory = parseMemoryInfo(memInfo)
 	}
 
-	if memInfo, err := mem.VirtualMemory(); err == nil {
-		stats.Memory = MemoryStats{
-			Total:      float64(memInfo.Total) / bytesInGB,
-			Used:       float64(memInfo.Used) / bytesInGB,
-			Percentage: memInfo.UsedPercent,
-			RawInfo: fmt.Sprintf("Total: %s, Used: %s, Free: %s",
-				formatBytes(memInfo.Total, "GB"),
-				formatBytes(memInfo.Used, "GB"),
-				formatBytes(memInfo.Free, "GB")),
-		}
-	}
-
-	if diskInfo, err := disk.Partitions(false); err == nil {
-		diskStats := DiskStats{
-			AllMounts: make([]DiskMount, 0, len(diskInfo)),
-		}
-
-		for _, partition := range diskInfo {
-			if usage, err := disk.Usage(partition.Mountpoint); err == nil {
-				mount := DiskMount{
-					Filesystem: partition.Fstype,
-					Size:       formatBytes(usage.Total, "GB"),
-					Used:       formatBytes(usage.Used, "GB"),
-					Avail:      formatBytes(usage.Free, "GB"),
-					Capacity:   fmt.Sprintf("%.1f%%", usage.UsedPercent),
-					MountPoint: partition.Mountpoint,
-				}
-
-				diskStats.AllMounts = append(diskStats.AllMounts, mount)
-
-				if mount.MountPoint == "/" || (diskStats.MountPoint != "/" && diskStats.Total == 0) {
-					diskStats.MountPoint = mount.MountPoint
-					diskStats.Total = float64(usage.Total) / bytesInGB
-					diskStats.Used = float64(usage.Used) / bytesInGB
-					diskStats.Available = float64(usage.Free) / bytesInGB
-					diskStats.Percentage = usage.UsedPercent
-				}
-			}
-		}
-
-		stats.Disk = diskStats
+	if diskInfo, err := m.getCommandOutput("df -h"); err == nil {
+		stats.Disk = parseDiskInfo(diskInfo)
 	}
 
 	m.Broadcast(string(GetSystemStats), stats)
@@ -108,6 +53,11 @@ func (m *DashboardMonitor) GetSystemStats() {
 
 func parseLoadAverage(loadStr string) LoadStats {
 	loadStats := LoadStats{}
+
+	uptimeRe := regexp.MustCompile(`up\s+(.+?),?\s+\d+\s+users?`)
+	if matches := uptimeRe.FindStringSubmatch(loadStr); len(matches) >= 2 {
+		loadStats.Uptime = strings.TrimSpace(matches[1])
+	}
 
 	loadRe := regexp.MustCompile(`load averages?: ([\d.]+),? ([\d.]+),? ([\d.]+)`)
 	matches := loadRe.FindStringSubmatch(loadStr)
@@ -124,6 +74,116 @@ func parseLoadAverage(loadStr string) LoadStats {
 	}
 
 	return loadStats
+}
+
+func parseMemoryInfo(memStr string) MemoryStats {
+	memory := MemoryStats{}
+
+	lines := strings.Split(memStr, "\n")
+	if len(lines) < 2 {
+		return memory
+	}
+
+	fields := strings.Fields(lines[1])
+	if len(fields) >= 3 {
+		if total, err := strconv.ParseUint(fields[1], 10, 64); err == nil {
+			memory.Total = float64(total) / bytesInGB
+		}
+		if used, err := strconv.ParseUint(fields[2], 10, 64); err == nil {
+			memory.Used = float64(used) / bytesInGB
+		}
+		if len(fields) >= 4 {
+			if free, err := strconv.ParseUint(fields[3], 10, 64); err == nil {
+				if memory.Total > 0 {
+					memory.Percentage = (memory.Used / memory.Total) * 100
+				}
+				memory.RawInfo = fmt.Sprintf("Total: %.2f GB, Used: %.2f GB, Free: %.2f GB",
+					memory.Total, memory.Used, float64(free)/bytesInGB)
+			}
+		}
+	}
+
+	return memory
+}
+
+func parseDiskInfo(diskStr string) DiskStats {
+	diskStats := DiskStats{
+		AllMounts: []DiskMount{},
+	}
+
+	lines := strings.Split(diskStr, "\n")
+	if len(lines) < 2 {
+		return diskStats
+	}
+
+	for i := 1; i < len(lines); i++ {
+		line := strings.TrimSpace(lines[i])
+		if line == "" {
+			continue
+		}
+
+		fields := strings.Fields(line)
+		if len(fields) >= 6 {
+			mount := DiskMount{
+				Filesystem: fields[0],
+				Size:       fields[1],
+				Used:       fields[2],
+				Avail:      fields[3],
+				Capacity:   fields[4],
+				MountPoint: fields[5],
+			}
+
+			diskStats.AllMounts = append(diskStats.AllMounts, mount)
+
+			if mount.MountPoint == "/" || (diskStats.MountPoint != "/" && diskStats.Total == 0) {
+				diskStats.MountPoint = mount.MountPoint
+
+				if size := parseSize(mount.Size); size > 0 {
+					diskStats.Total = size
+				}
+				if used := parseSize(mount.Used); used > 0 {
+					diskStats.Used = used
+				}
+				if avail := parseSize(mount.Avail); avail > 0 {
+					diskStats.Available = avail
+				}
+				if capacity := strings.TrimSuffix(mount.Capacity, "%"); capacity != "" {
+					if percentage, err := strconv.ParseFloat(capacity, 64); err == nil {
+						diskStats.Percentage = percentage
+					}
+				}
+			}
+		}
+	}
+
+	return diskStats
+}
+
+func parseSize(sizeStr string) float64 {
+	if sizeStr == "" {
+		return 0
+	}
+
+	unit := sizeStr[len(sizeStr)-1:]
+	numberStr := sizeStr[:len(sizeStr)-1]
+
+	size, err := strconv.ParseFloat(numberStr, 64)
+	if err != nil {
+		return 0
+	}
+
+	switch strings.ToUpper(unit) {
+	case "G":
+		return size
+	case "M":
+		return size / 1024
+	case "K":
+		return size / (1024 * 1024)
+	case "T":
+		return size * 1024
+	default:
+		return size
+	}
 }
 
 func (m *DashboardMonitor) getCommandOutput(cmd string) (string, error) {

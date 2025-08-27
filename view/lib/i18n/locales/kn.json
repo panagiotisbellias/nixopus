@@ -1256,7 +1256,8 @@
     "team": "ತಂಡ",
     "domains": "ಡೊಮೇನ್‌ಗಳು",
     "update": "ಅಪ್ಡೇಟ್",
-    "containers": "ಕಂಟೇನರ್ಗಳು"
+    "containers": "ಕಂಟೇನರ್ಗಳು",
+    "servers":"Servers"
   },
   "layout": {
     "breadcrumbs": {

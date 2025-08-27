@@ -8,10 +8,11 @@ import (
 	"github.com/raghavyuva/nixopus-api/internal/features/deploy/docker"
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
 	sshpkg "github.com/raghavyuva/nixopus-api/internal/features/ssh"
+	"github.com/raghavyuva/nixopus-api/internal/types"
 )
 
-func NewDashboardMonitor(conn *websocket.Conn, log logger.Logger) (*DashboardMonitor, error) {
-	ssh_client := sshpkg.NewSSH()
+func NewDashboardMonitor(conn *websocket.Conn, log logger.Logger, server *types.Server) (*DashboardMonitor, error) {
+	ssh_client := sshpkg.NewSSHWithServer(server)
 	ctx, cancel := context.WithCancel(context.Background())
 
 	monitor := &DashboardMonitor{

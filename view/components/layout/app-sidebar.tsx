@@ -70,6 +70,11 @@ const data = {
           title: 'navigation.domains',
           url: '/settings/domains',
           resource: 'domain'
+        },
+        {
+          title: "navigation.servers",
+          url: "/settings/servers",
+          resource: "server"
         }
       ]
     }

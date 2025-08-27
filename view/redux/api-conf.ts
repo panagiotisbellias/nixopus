@@ -125,3 +125,10 @@ export enum IMAGEURLS {
   PRUNE_IMAGES = 'v1/container/prune/images',
   PRUNE_BUILD_CACHE = 'v1/container/prune/build-cache'
 }
+
+export enum SERVER_SETTINGS {
+  CREATE_SERVER = 'v1/server',
+  GET_SERVERS = 'v1/servers',
+  UPDATE_SERVER = 'v1/server',
+  DELETE_SERVER = 'v1/server'
+}

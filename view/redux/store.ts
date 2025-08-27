@@ -14,8 +14,10 @@ import { authApi } from '@/redux/services/users/authApi';
 import authReducer from '@/redux/features/users/authSlice';
 import { userApi } from '@/redux/services/users/userApi';
 import userSlice from '@/redux/features/users/userSlice';
+import serverSlice from '@/redux/features/servers/serverSlice';
 import { notificationApi } from '@/redux/services/settings/notificationApi';
 import { domainsApi } from '@/redux/services/settings/domainsApi';
+import { serversApi } from '@/redux/services/settings/serversApi';
 import { GithubConnectorApi } from '@/redux/services/connector/githubConnectorApi';
 import githubConnector from './features/github-connector/githubConnectorSlice';
 import { deployApi } from './services/deploy/applicationsApi';
@@ -36,7 +38,7 @@ const persistConfig = {
   key: 'root',
   version: 1,
   storage,
-  whitelist: ['auth', 'user'],
+  whitelist: ['auth', 'user', 'server'],
   migrate: (state: any) => {
     if (!state) return Promise.resolve(undefined);
     return Promise.resolve(state);
@@ -49,10 +51,12 @@ const rootReducer = combineReducers({
   [userApi.reducerPath]: userApi.reducer,
   notificationApi: notificationApi.reducer,
   [domainsApi.reducerPath]: domainsApi.reducer,
+  [serversApi.reducerPath]: serversApi.reducer,
   [GithubConnectorApi.reducerPath]: GithubConnectorApi.reducer,
   githubConnector: githubConnector,
   [deployApi.reducerPath]: deployApi.reducer,
   user: userSlice,
+  server: serverSlice,
   fileManagersApi: fileManagersApi.reducer,
   [auditApi.reducerPath]: auditApi.reducer,
   [FeatureFlagsApi.reducerPath]: FeatureFlagsApi.reducer,
@@ -85,6 +89,7 @@ const storeOptions: ConfigureStoreOptions = {
       userApi.middleware,
       notificationApi.middleware,
       domainsApi.middleware,
+      serversApi.middleware,
       GithubConnectorApi.middleware,
       deployApi.middleware,
       fileManagersApi.middleware,

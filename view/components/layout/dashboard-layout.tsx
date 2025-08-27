@@ -19,18 +19,15 @@ import { Terminal } from '@/app/terminal/terminal';
 import { useTerminalState } from '@/app/terminal/utils/useTerminalState';
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '@/components/ui/resizable';
 import { useTranslation } from '@/hooks/use-translation';
-import Link from 'next/link';
 import { Tour } from '@/components/Tour';
 import { useTour } from '@/hooks/useTour';
 import { Button } from '@/components/ui/button';
 import { HelpCircle } from 'lucide-react';
-import { UpdateIcon } from '@radix-ui/react-icons';
 import { useAppSelector } from '@/redux/hooks';
-import { useCheckForUpdatesQuery, usePerformUpdateMutation } from '@/redux/services/users/userApi';
-import { toast } from 'sonner';
 import { AnyPermissionGuard } from '@/components/rbac/PermissionGuard';
 import { ModeToggler } from '@/components/ui/theme-toggler';
 import { RBACGuard } from '@/components/rbac/RBACGuard';
+import { ServerSelector } from '@/components/layout/server-selector';
 
 enum TERMINAL_POSITION {
   BOTTOM = 'bottom',
@@ -58,13 +55,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const [TerminalPosition, setTerminalPosition] = React.useState(TERMINAL_POSITION.BOTTOM);
   const [fitAddonRef, setFitAddonRef] = React.useState<any | null>(null);
   const { startTour } = useTour();
-  const {
-    data: updateCheck,
-    refetch: checkForUpdates,
-    isFetching: isCheckingForUpdates
-  } = useCheckForUpdatesQuery();
-  const [performUpdate, { isLoading: isPerformingUpdate }] = usePerformUpdateMutation();
-
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 't' && e.ctrlKey) {
@@ -79,17 +69,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, []);
-
-  const handleUpdate = async () => {
-    try {
-      await checkForUpdates();
-      await performUpdate();
-      toast.success('Update Completed Successfully');
-    } catch (error) {
-      console.error('Update failed:', error);
-      toast.error('Update failed, please try again');
-    }
-  };
 
   return (
     <SidebarProvider defaultOpen={true}>
@@ -120,14 +99,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               )}
             </div>
             <div className="flex items-center gap-4">
-              <Button variant="outline" onClick={handleUpdate} disabled={isPerformingUpdate}>
-                {isPerformingUpdate ? (
-                  <UpdateIcon className="h-4 w-4 animate-spin text-green-500" />
-                ) : (
-                  <UpdateIcon className="h-4 w-4" />
-                )}
-                {t('navigation.update')}
-              </Button>
+              <RBACGuard resource="server" action="read" loadingFallback={null}>
+                <ServerSelector />
+              </RBACGuard>
               <Button
                 variant="outline"
                 size="icon"
@@ -139,8 +113,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               </Button>
               <KeyboardShortcuts />
               <RBACGuard resource="user" action="update">
-              <ModeToggler />
-            </RBACGuard>
+                <ModeToggler />
+              </RBACGuard>
             </div>
           </div>
         </header>
