@@ -38,21 +38,16 @@ const getStatusLabel = (status: string) => {
 
 export function ServerSelector({ className }: ServerSelectorProps) {
   const dispatch = useAppDispatch();
-  const activeOrg = useAppSelector((state) => state.user.activeOrganization);
   const activeServer = useAppSelector((state) => state.server.activeServer);
 
   const { data: serverResponse, isLoading: isServersLoading } = useGetAllServersQuery({
-    organization_id: activeOrg?.id || '',
     page: 1,
     page_size: 100,
     sort_by: 'name',
     sort_order: 'asc'
   });
 
-  const { data: apiActiveServer, isLoading: isActiveServerLoading } = useGetActiveServerQuery(
-    { organization_id: activeOrg?.id || '' },
-    { skip: !activeOrg?.id }
-  );
+  const { data: apiActiveServer, isLoading: isActiveServerLoading } = useGetActiveServerQuery();
 
   const [updateServerStatus] = useUpdateServerStatusMutation();
 

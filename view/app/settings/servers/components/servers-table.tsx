@@ -86,12 +86,6 @@ function ServersTable({ servers, pagination, isLoading, queryParams, onQueryChan
     }
   };
 
-    const getAuthMethod = (server: Server) => {
-    if (server.ssh_password) return 'Password';
-    if (server.ssh_private_key_path) return 'Private Key';
-    return 'Unknown';
-  };
-
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     onQueryChange({ search: e.target.value, page: 1 });
   };
@@ -175,7 +169,6 @@ function ServersTable({ servers, pagination, isLoading, queryParams, onQueryChan
                   <TableHead>Host</TableHead>
                   <TableHead>Port</TableHead>
                   <TableHead>Username</TableHead>
-                  <TableHead>Auth Method</TableHead>
                   <TableHead>Created</TableHead>
                   <TableHead className="w-[70px]"></TableHead>
                 </TableRow>
@@ -205,11 +198,6 @@ function ServersTable({ servers, pagination, isLoading, queryParams, onQueryChan
                       <code className="text-sm bg-muted px-2 py-1 rounded">
                         {server.username}
                       </code>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant={getAuthMethod(server) === 'Password' ? 'default' : 'secondary'}>
-                        {getAuthMethod(server)}
-                      </Badge>
                     </TableCell>
                     <TableCell>
                       <span className="text-sm text-muted-foreground">

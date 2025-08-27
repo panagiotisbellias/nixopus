@@ -11,7 +11,6 @@ import ServersTable from './components/servers-table';
 function Page() {
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [queryParams, setQueryParams] = useState<GetServersRequest>({
-    organization_id: '',
     page: 1,
     page_size: 10,
     search: '',
@@ -26,8 +25,8 @@ function Page() {
   };
 
   return (
-    <ResourceGuard 
-      resource="server" 
+    <ResourceGuard
+      resource="server"
       action="read"
       loadingFallback={<Skeleton className="h-96" />}
     >
@@ -38,8 +37,8 @@ function Page() {
             description=""
           />
           <ResourceGuard resource="server" action="create">
-            <CreateServerDialog 
-              open={createDialogOpen} 
+            <CreateServerDialog
+              open={createDialogOpen}
               setOpen={setCreateDialogOpen}
             />
           </ResourceGuard>
@@ -51,8 +50,8 @@ function Page() {
               <p className="text-destructive">Failed to load servers. Please try again.</p>
             </div>
           ) : (
-            <ServersTable 
-              servers={serverResponse?.servers || []} 
+            <ServersTable
+              servers={serverResponse?.servers || []}
               pagination={serverResponse?.pagination}
               isLoading={isLoading}
               queryParams={queryParams}

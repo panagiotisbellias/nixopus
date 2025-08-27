@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/go-fuego/fuego"
+	"github.com/google/uuid"
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
 	"github.com/raghavyuva/nixopus-api/internal/features/servers/types"
 	"github.com/raghavyuva/nixopus-api/internal/utils"
@@ -38,7 +39,16 @@ func (c *ServersController) CreateServer(f fuego.ContextWithBody[types.CreateSer
 		}
 	}
 
-	created, err := c.service.CreateServer(serverRequest, user.ID.String())
+	organization := utils.GetOrganizationID(r)
+
+	if organization == uuid.Nil {
+		return nil, fuego.HTTPError{
+			Err:    nil,
+			Status: http.StatusUnauthorized,
+		}
+	}
+
+	created, err := c.service.CreateServer(serverRequest, user.ID.String(), organization.String())
 
 	if err != nil {
 		c.logger.Log(logger.Error, err.Error(), "")

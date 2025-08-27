@@ -172,10 +172,6 @@ func (v *Validator) ValidateCreateServerRequest(req types.CreateServerRequest) e
 		return err
 	}
 
-	if err := v.ValidateID(req.OrganizationID.String()); err != nil {
-		return err
-	}
-
 	return nil
 }
 

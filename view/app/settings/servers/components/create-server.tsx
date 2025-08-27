@@ -103,8 +103,6 @@ function CreateServerDialog({ open, setOpen, id, data }: CreateServerDialogProps
     }
   });
 
-  const activeOrganization = useAppSelector((state) => state.user.activeOrganization);
-
   async function onSubmit(formData: z.infer<typeof serverFormSchema>) {
     try {
       const serverData = {
@@ -113,7 +111,6 @@ function CreateServerDialog({ open, setOpen, id, data }: CreateServerDialogProps
         host: formData.host,
         port: formData.port,
         username: formData.username,
-        organization_id: activeOrganization?.id || '',
         ...(authType === AuthenticationType.PASSWORD 
           ? { ssh_password: formData.ssh_password }
           : { ssh_private_key_path: formData.ssh_private_key_path }

@@ -85,8 +85,8 @@ export const serversApi = createApi({
         return response.data;
       }
     }),
-    getActiveServer: builder.query<Server | null, { organization_id: string }>({
-      query: ({ organization_id }) => ({
+    getActiveServer: builder.query<Server | null, void>({
+      query: () => ({
         url: `${SERVER_SETTINGS.GET_SERVERS}?page=1&page_size=100`,
         method: 'GET'
       }),

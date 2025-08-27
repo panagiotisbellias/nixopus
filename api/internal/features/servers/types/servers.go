@@ -2,6 +2,7 @@ package types
 
 import (
 	"errors"
+	"time"
 
 	"github.com/google/uuid"
 )
@@ -79,6 +80,16 @@ type CreateServerResponse struct {
 	ID string `json:"id"`
 }
 
-type GetServersRequest struct {
+type ServerResponseWithoutSecrets struct {
+	ID             uuid.UUID `json:"id"`
+	Name           string    `json:"name"`
+	Description    string    `json:"description"`
+	Host           string    `json:"host"`
+	Port           int       `json:"port"`
+	Username       string    `json:"username"`
+	Status         string    `json:"status"`
+	CreatedAt      time.Time `json:"created_at"`
+	UpdatedAt      time.Time `json:"updated_at"`
+	UserID         uuid.UUID `json:"user_id"`
 	OrganizationID uuid.UUID `json:"organization_id"`
 }

@@ -19,7 +19,7 @@ import (
 // It returns a CreateServerResponse containing the server ID, and an error.
 // The error is either ErrServerAlreadyExists, or any error that occurred
 // while creating the server in the storage layer.
-func (s *ServersService) CreateServer(req types.CreateServerRequest, userID string) (types.CreateServerResponse, error) {
+func (s *ServersService) CreateServer(req types.CreateServerRequest, userID string, organizationID string) (types.CreateServerResponse, error) {
 	s.logger.Log(logger.Info, "create server request received", fmt.Sprintf("server_name=%s, host=%s, user_id=%s", req.Name, req.Host, userID))
 
 	_, err := uuid.Parse(userID)
@@ -38,13 +38,13 @@ func (s *ServersService) CreateServer(req types.CreateServerRequest, userID stri
 		return types.CreateServerResponse{}, err
 	}
 
-	org, err := s.store.Organization.GetOrganization(req.OrganizationID.String())
+	org, err := s.store.Organization.GetOrganization(organizationID)
 	if err != nil {
 		s.logger.Log(logger.Error, "error while retrieving organization", err.Error())
 		return types.CreateServerResponse{}, fmt.Errorf("organization not found")
 	}
 	if org == nil || org.ID == uuid.Nil {
-		s.logger.Log(logger.Error, "organization not found", req.OrganizationID.String())
+		s.logger.Log(logger.Error, "organization not found", organizationID)
 		return types.CreateServerResponse{}, fmt.Errorf("organization not found")
 	}
 
@@ -58,7 +58,7 @@ func (s *ServersService) CreateServer(req types.CreateServerRequest, userID stri
 	txStorage := s.storage.WithTx(tx)
 
 	// Check for existing server by name
-	existingServerByName, err := txStorage.GetServerName(req.Name, req.OrganizationID)
+	existingServerByName, err := txStorage.GetServerName(req.Name, uuid.MustParse(organizationID))
 	if err != nil {
 		s.logger.Log(logger.Debug, "error while checking existing server by name", err.Error())
 	}
@@ -69,7 +69,7 @@ func (s *ServersService) CreateServer(req types.CreateServerRequest, userID stri
 	}
 
 	// Check for existing server by host and port
-	existingServerByHost, err := txStorage.GetServerByHost(req.Host, req.Port, req.OrganizationID)
+	existingServerByHost, err := txStorage.GetServerByHost(req.Host, req.Port, uuid.MustParse(organizationID))
 	if err != nil {
 		s.logger.Log(logger.Debug, "error while checking existing server by host", err.Error())
 	}
@@ -92,7 +92,7 @@ func (s *ServersService) CreateServer(req types.CreateServerRequest, userID stri
 		UpdatedAt:         time.Now(),
 		DeletedAt:         nil,
 		UserID:            uuid.MustParse(userID),
-		OrganizationID:    req.OrganizationID,
+		OrganizationID:    uuid.MustParse(organizationID),
 	}
 
 	if err := txStorage.CreateServer(server); err != nil {

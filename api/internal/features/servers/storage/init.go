@@ -26,8 +26,6 @@ type ServerStorageInterface interface {
 	GetServersCount(OrganizationID string, UserID uuid.UUID, search string) (int, error)
 	GetServerName(name string, organizationID uuid.UUID) (*shared_types.Server, error)
 	GetServerByHost(host string, port int, organizationID uuid.UUID) (*shared_types.Server, error)
-	IsServerExists(ID string) (bool, error)
-	GetServerOwnerByID(ID string) (string, error)
 	BeginTx() (bun.Tx, error)
 	WithTx(tx bun.Tx) ServerStorageInterface
 }
@@ -108,6 +106,7 @@ func (s *ServerStorage) DeleteServer(server *shared_types.Server) error {
 func (s *ServerStorage) GetServers(OrganizationID string, UserID uuid.UUID) ([]shared_types.Server, error) {
 	var servers []shared_types.Server
 	err := s.getDB().NewSelect().Model(&servers).
+		Column("id", "name", "description", "host", "port", "username", "status", "created_at", "updated_at", "user_id", "organization_id").
 		Where("organization_id = ? AND user_id = ? AND deleted_at IS NULL", OrganizationID, UserID).
 		Scan(s.Ctx)
 	if err != nil {
@@ -120,6 +119,7 @@ func (s *ServerStorage) GetServersPaginated(OrganizationID string, UserID uuid.U
 	var servers []shared_types.Server
 
 	query := s.getDB().NewSelect().Model(&servers).
+		Column("id", "name", "description", "host", "port", "username", "status", "created_at", "updated_at", "user_id", "organization_id").
 		Where("organization_id = ? AND user_id = ? AND deleted_at IS NULL", OrganizationID, UserID)
 
 	if queryParams.Search != "" {
@@ -188,26 +188,4 @@ func (s *ServerStorage) GetServerByHost(host string, port int, organizationID uu
 		return nil, err
 	}
 	return &server, nil
-}
-
-func (s *ServerStorage) IsServerExists(ID string) (bool, error) {
-	count, err := s.getDB().NewSelect().Model((*shared_types.Server)(nil)).
-		Where("id = ? AND deleted_at IS NULL", ID).
-		Count(s.Ctx)
-	if err != nil {
-		return false, err
-	}
-	return count > 0, nil
-}
-
-func (s *ServerStorage) GetServerOwnerByID(ID string) (string, error) {
-	var server shared_types.Server
-	err := s.getDB().NewSelect().Model(&server).
-		Column("user_id").
-		Where("id = ? AND deleted_at IS NULL", ID).
-		Scan(s.Ctx)
-	if err != nil {
-		return "", err
-	}
-	return server.UserID.String(), nil
 }

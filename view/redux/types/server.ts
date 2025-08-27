@@ -26,7 +26,6 @@ export interface CreateServerRequest {
   ssh_password?: string;
   ssh_private_key_path?: string;
   status?: ServerStatus;
-  organization_id: string;
 }
 
 export interface UpdateServerRequest {
@@ -55,7 +54,6 @@ export interface CreateServerResponse {
 }
 
 export interface GetServersRequest {
-  organization_id: string;
   page?: number;
   page_size?: number;
   search?: string;
