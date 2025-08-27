@@ -1,5 +1,5 @@
 'use client';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -25,7 +25,7 @@ import { Button } from '@/components/ui/button';
 
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
-import { useCreateServerMutation } from '@/redux/services/settings/serversApi';
+import { useCreateServerMutation, useUpdateServerMutation } from '@/redux/services/settings/serversApi';
 import { useTranslation } from '@/hooks/use-translation';
 import { Server, AuthenticationType } from '@/redux/types/server';
 import { Plus } from 'lucide-react';
@@ -33,14 +33,25 @@ import { Plus } from 'lucide-react';
 interface CreateServerDialogProps {
   open?: boolean;
   setOpen?: (open: boolean) => void;
-  id?: string;
-  data?: Server;
+  serverId?: string;
+  serverData?: Server;
+  mode?: 'create' | 'edit';
 }
 
-function CreateServerDialog({ open, setOpen, id, data }: CreateServerDialogProps) {
+function CreateServerDialog({ open, setOpen, serverId, serverData, mode = 'create' }: CreateServerDialogProps) {
   const { t } = useTranslation();
-  const [createServer, { isLoading }] = useCreateServerMutation();
-  const [authType, setAuthType] = useState<AuthenticationType>(AuthenticationType.PASSWORD);
+  const [createServer, { isLoading: isCreating }] = useCreateServerMutation();
+  const [updateServer, { isLoading: isUpdating }] = useUpdateServerMutation();
+  
+  const isEditMode = mode === 'edit';
+  const isLoading = isCreating || isUpdating;
+  
+  const [authType, setAuthType] = useState<AuthenticationType>(() => {
+    if (isEditMode && serverData) {
+      return serverData.ssh_password ? AuthenticationType.PASSWORD : AuthenticationType.PRIVATE_KEY;
+    }
+    return AuthenticationType.PASSWORD;
+  });
 
   const serverFormSchema = z.object({
     name: z
@@ -92,19 +103,47 @@ function CreateServerDialog({ open, setOpen, id, data }: CreateServerDialogProps
   const form = useForm({
     resolver: zodResolver(serverFormSchema),
     defaultValues: {
-      name: data?.name || '',
-      description: data?.description || '',
-      host: data?.host || '',
-      port: data?.port || 22,
-      username: data?.username || '',
+      name: serverData?.name || '',
+      description: serverData?.description || '',
+      host: serverData?.host || '',
+      port: serverData?.port || 22,
+      username: serverData?.username || '',
       ssh_password: '',
-      ssh_private_key_path: ''
+      ssh_private_key_path: serverData?.ssh_private_key_path || ''
     }
   });
 
+  // Reset form when serverData changes (switching between create/edit modes)
+  useEffect(() => {
+    if (serverData) {
+      form.reset({
+        name: serverData.name,
+        description: serverData.description,
+        host: serverData.host,
+        port: serverData.port,
+        username: serverData.username,
+        ssh_password: '',
+        ssh_private_key_path: serverData.ssh_private_key_path || ''
+      });
+      
+      setAuthType(serverData.ssh_password ? AuthenticationType.PASSWORD : AuthenticationType.PRIVATE_KEY);
+    } else {
+      form.reset({
+        name: '',
+        description: '',
+        host: '',
+        port: 22,
+        username: '',
+        ssh_password: '',
+        ssh_private_key_path: ''
+      });
+      setAuthType(AuthenticationType.PASSWORD);
+    }
+  }, [serverData, form]);
+
   async function onSubmit(formData: z.infer<typeof serverFormSchema>) {
     try {
-      const serverData = {
+      const requestData = {
         name: formData.name,
         description: formData.description || '',
         host: formData.host,
@@ -116,18 +155,28 @@ function CreateServerDialog({ open, setOpen, id, data }: CreateServerDialogProps
         )
       };
 
-      await createServer(serverData).unwrap();
-      toast.success(t('servers.messages.createSuccess'));
+      if (isEditMode && serverId) {
+        await updateServer({ id: serverId, ...requestData }).unwrap();
+        toast.success(t('servers.messages.updateSuccess'));
+      } else {
+        await createServer(requestData).unwrap();
+        toast.success(t('servers.messages.createSuccess'));
+      }
+      
       form.reset();
       setOpen?.(false);
     } catch (error) {
-      toast.error(t('servers.messages.createError'));
+      if (isEditMode) {
+        toast.error(t('servers.messages.updateError'));
+      } else {
+        toast.error(t('servers.messages.createError'));
+      }
     }
   }
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      {!id && (
+      {!isEditMode && (
         <DialogTrigger asChild>
           <Button variant="outline">
             <Plus className="mr-2 h-4 w-4" />
@@ -138,7 +187,7 @@ function CreateServerDialog({ open, setOpen, id, data }: CreateServerDialogProps
       <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>
-            {!id ? t('servers.create.dialog.title.add') : t('servers.create.dialog.title.update')}
+            {!isEditMode ? t('servers.create.dialog.title.add') : t('servers.create.dialog.title.update')}
           </DialogTitle>
           <DialogDescription>
             {t('servers.create.dialog.description')}
@@ -299,7 +348,10 @@ function CreateServerDialog({ open, setOpen, id, data }: CreateServerDialogProps
                 {t('servers.create.dialog.buttons.cancel')}
               </Button>
               <Button type="submit" disabled={isLoading}>
-                {isLoading ? t('servers.create.dialog.buttons.creating') : t('servers.create.dialog.buttons.create')}
+                {isLoading 
+                  ? (isEditMode ? t('servers.create.dialog.buttons.updating') : t('servers.create.dialog.buttons.creating'))
+                  : (isEditMode ? t('servers.create.dialog.buttons.update') : t('servers.create.dialog.buttons.create'))
+                }
               </Button>
             </DialogFooter>
           </form>

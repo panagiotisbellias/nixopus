@@ -1393,7 +1393,9 @@
         "buttons": {
           "cancel": "Annuler",
           "create": "Créer le Serveur",
-          "creating": "Création en cours..."
+          "creating": "Création en cours...",
+          "update": "Mettre à jour le Serveur",
+          "updating": "Mise à jour en cours..."
         }
       }
     },
@@ -1424,6 +1426,8 @@
     "messages": {
       "createSuccess": "Serveur créé avec succès",
       "createError": "Échec de la création du serveur",
+      "updateSuccess": "Serveur mis à jour avec succès",
+      "updateError": "Échec de la mise à jour du serveur",
       "deleteSuccess": "Serveur supprimé avec succès",
       "deleteError": "Échec de la suppression du serveur"
     }

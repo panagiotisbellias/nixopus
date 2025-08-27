@@ -41,9 +41,10 @@ interface ServersTableProps {
   isLoading: boolean;
   queryParams: GetServersRequest;
   onQueryChange: (params: Partial<GetServersRequest>) => void;
+  onEditServer: (server: Server) => void;
 }
 
-function ServersTable({ servers, pagination, isLoading, queryParams, onQueryChange }: ServersTableProps) {
+function ServersTable({ servers, pagination, isLoading, queryParams, onQueryChange, onEditServer }: ServersTableProps) {
   const { t } = useTranslation();
   const [deleteServer] = useDeleteServerMutation();
   const [deletingId, setDeletingId] = useState<string | null>(null);
@@ -214,7 +215,10 @@ function ServersTable({ servers, pagination, isLoading, queryParams, onQueryChan
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                          <DropdownMenuItem className="cursor-pointer">
+                          <DropdownMenuItem 
+                            className="cursor-pointer"
+                            onClick={() => onEditServer(server)}
+                          >
                             <Edit className="mr-2 h-4 w-4" />
                             {t('servers.actions.edit')}
                           </DropdownMenuItem>

@@ -1400,7 +1400,9 @@
         "buttons": {
           "cancel": "Cancelar",
           "create": "Crear Servidor",
-          "creating": "Creando..."
+          "creating": "Creando...",
+          "update": "Actualizar Servidor",
+          "updating": "Actualizando..."
         }
       }
     },
@@ -1431,6 +1433,8 @@
     "messages": {
       "createSuccess": "Servidor creado exitosamente",
       "createError": "Error al crear el servidor",
+      "updateSuccess": "Servidor actualizado exitosamente",
+      "updateError": "Error al actualizar el servidor",
       "deleteSuccess": "Servidor eliminado exitosamente",
       "deleteError": "Error al eliminar el servidor"
     }

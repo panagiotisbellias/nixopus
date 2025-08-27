@@ -4,7 +4,7 @@ import DashboardPageHeader from '@/components/layout/dashboard-page-header';
 import { ResourceGuard } from '@/components/rbac/PermissionGuard';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useGetAllServersQuery } from '@/redux/services/settings/serversApi';
-import { GetServersRequest } from '@/redux/types/server';
+import { GetServersRequest, Server } from '@/redux/types/server';
 import { useTranslation } from '@/hooks/use-translation';
 import CreateServerDialog from './components/create-server';
 import ServersTable from './components/servers-table';
@@ -12,6 +12,8 @@ import ServersTable from './components/servers-table';
 function Page() {
   const { t } = useTranslation();
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [editingServer, setEditingServer] = useState<Server | null>(null);
   const [queryParams, setQueryParams] = useState<GetServersRequest>({
     page: 1,
     page_size: 10,
@@ -24,6 +26,16 @@ function Page() {
 
   const handleQueryChange = (newParams: Partial<GetServersRequest>) => {
     setQueryParams(prev => ({ ...prev, ...newParams }));
+  };
+
+  const handleEditServer = (server: Server) => {
+    setEditingServer(server);
+    setEditDialogOpen(true);
+  };
+
+  const handleEditDialogClose = () => {
+    setEditDialogOpen(false);
+    setEditingServer(null);
   };
 
   return (
@@ -58,9 +70,20 @@ function Page() {
               isLoading={isLoading}
               queryParams={queryParams}
               onQueryChange={handleQueryChange}
+              onEditServer={handleEditServer}
             />
           )}
         </div>
+
+        <ResourceGuard resource="server" action="update">
+          <CreateServerDialog
+            open={editDialogOpen}
+            setOpen={handleEditDialogClose}
+            mode="edit"
+            serverId={editingServer?.id}
+            serverData={editingServer || undefined}
+          />
+        </ResourceGuard>
       </div>
     </ResourceGuard>
   );

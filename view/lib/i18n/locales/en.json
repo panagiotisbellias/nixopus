@@ -1382,7 +1382,9 @@
         "buttons": {
           "cancel": "Cancel",
           "create": "Create Server",
-          "creating": "Creating..."
+          "creating": "Creating...",
+          "update": "Update Server",
+          "updating": "Updating..."
         }
       }
     },
@@ -1413,6 +1415,8 @@
     "messages": {
       "createSuccess": "Server created successfully",
       "createError": "Failed to create server",
+      "updateSuccess": "Server updated successfully",
+      "updateError": "Failed to update server",
       "deleteSuccess": "Server deleted successfully",
       "deleteError": "Failed to delete server"
     }
