@@ -5,10 +5,12 @@ import { ResourceGuard } from '@/components/rbac/PermissionGuard';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useGetAllServersQuery } from '@/redux/services/settings/serversApi';
 import { GetServersRequest } from '@/redux/types/server';
+import { useTranslation } from '@/hooks/use-translation';
 import CreateServerDialog from './components/create-server';
 import ServersTable from './components/servers-table';
 
 function Page() {
+  const { t } = useTranslation();
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [queryParams, setQueryParams] = useState<GetServersRequest>({
     page: 1,
@@ -33,8 +35,8 @@ function Page() {
       <div className="container mx-auto py-6 space-y-8 max-w-6xl">
         <div className="flex justify-between items-center">
           <DashboardPageHeader
-            label="Servers"
-            description=""
+            label={t('servers.page.title')}
+            description={t('servers.page.description')}
           />
           <ResourceGuard resource="server" action="create">
             <CreateServerDialog
@@ -47,7 +49,7 @@ function Page() {
         <div className="space-y-6">
           {error ? (
             <div className="text-center py-12">
-              <p className="text-destructive">Failed to load servers. Please try again.</p>
+              <p className="text-destructive">{t('servers.page.error')}</p>
             </div>
           ) : (
             <ServersTable

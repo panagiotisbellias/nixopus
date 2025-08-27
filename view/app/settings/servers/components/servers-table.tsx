@@ -28,6 +28,7 @@ import { toast } from 'sonner';
 import { useDeleteServerMutation } from '@/redux/services/settings/serversApi';
 import { Server, Pagination, GetServersRequest } from '@/redux/types/server';
 import { formatDistanceToNow } from 'date-fns';
+import { useTranslation } from '@/hooks/use-translation';
 import ServersTableSkeleton from './servers-table-skeleton';
 import { DeleteDialog } from '@/components/ui/delete-dialog';
 import { SearchBar } from '@/components/ui/search-bar';
@@ -43,22 +44,23 @@ interface ServersTableProps {
 }
 
 function ServersTable({ servers, pagination, isLoading, queryParams, onQueryChange }: ServersTableProps) {
+  const { t } = useTranslation();
   const [deleteServer] = useDeleteServerMutation();
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [serverToDelete, setServerToDelete] = useState<Server | null>(null);
 
   const sortOptions: SortOption<Server>[] = [
-    { value: 'name', label: 'Name (A-Z)', direction: 'asc' },
-    { value: 'name', label: 'Name (Z-A)', direction: 'desc' },
-    { value: 'host', label: 'Host (A-Z)', direction: 'asc' },
-    { value: 'host', label: 'Host (Z-A)', direction: 'desc' },
-    { value: 'port', label: 'Port (Low-High)', direction: 'asc' },
-    { value: 'port', label: 'Port (High-Low)', direction: 'desc' },
-    { value: 'username', label: 'Username (A-Z)', direction: 'asc' },
-    { value: 'username', label: 'Username (Z-A)', direction: 'desc' },
-    { value: 'created_at', label: 'Created (Newest)', direction: 'desc' },
-    { value: 'created_at', label: 'Created (Oldest)', direction: 'asc' }
+    { value: 'name', label: t('servers.table.sort.name_asc'), direction: 'asc' },
+    { value: 'name', label: t('servers.table.sort.name_desc'), direction: 'desc' },
+    { value: 'host', label: t('servers.table.sort.host_asc'), direction: 'asc' },
+    { value: 'host', label: t('servers.table.sort.host_desc'), direction: 'desc' },
+    { value: 'port', label: t('servers.table.sort.port_asc'), direction: 'asc' },
+    { value: 'port', label: t('servers.table.sort.port_desc'), direction: 'desc' },
+    { value: 'username', label: t('servers.table.sort.username_asc'), direction: 'asc' },
+    { value: 'username', label: t('servers.table.sort.username_desc'), direction: 'desc' },
+    { value: 'created_at', label: t('servers.table.sort.created_newest'), direction: 'desc' },
+    { value: 'created_at', label: t('servers.table.sort.created_oldest'), direction: 'asc' }
   ];
 
   const currentSortOption = sortOptions.find(
@@ -76,11 +78,11 @@ function ServersTable({ servers, pagination, isLoading, queryParams, onQueryChan
     try {
       setDeletingId(serverToDelete.id);
       await deleteServer({ id: serverToDelete.id }).unwrap();
-      toast.success('Server deleted successfully');
+      toast.success(t('servers.messages.deleteSuccess'));
       setDeleteDialogOpen(false);
       setServerToDelete(null);
     } catch (error) {
-      toast.error('Failed to delete server');
+      toast.error(t('servers.messages.deleteError'));
     } finally {
       setDeletingId(null);
     }
@@ -117,18 +119,18 @@ function ServersTable({ servers, pagination, isLoading, queryParams, onQueryChan
           <SearchBar
             searchTerm={queryParams.search || ''}
             handleSearchChange={handleSearchChange}
-            label="Search servers..."
+            label={t('servers.table.search.placeholder')}
           />
           <SortSelect
             options={sortOptions}
             currentSort={currentSortOption}
             onSortChange={handleSortChange}
-            placeholder="Sort servers"
+            placeholder={t('servers.table.sort.placeholder')}
             className="w-full sm:w-[200px]"
           />
         </div>
         <div className="flex items-center gap-2">
-          <span className="text-sm text-muted-foreground whitespace-nowrap">Items per page:</span>
+          <span className="text-sm text-muted-foreground whitespace-nowrap">{t('servers.table.pagination.itemsPerPage')}</span>
           <Select value={queryParams.page_size?.toString() || '10'} onValueChange={handlePageSizeChange}>
             <SelectTrigger className="w-[70px]">
               <SelectValue />
@@ -146,17 +148,17 @@ function ServersTable({ servers, pagination, isLoading, queryParams, onQueryChan
       {!servers?.length ? (
         <div className="text-center py-12 border rounded-lg">
           <ServerIcon className="mx-auto h-12 w-12 text-muted-foreground" />
-          <h3 className="mt-2 text-sm font-semibold text-foreground">No servers</h3>
+          <h3 className="mt-2 text-sm font-semibold text-foreground">{t('servers.table.empty.noServers.title')}</h3>
           <p className="mt-1 text-sm text-muted-foreground">
-            Get started by creating your first server.
+            {t('servers.table.empty.noServers.description')}
           </p>
         </div>
       ) : servers.length === 0 ? (
         <div className="text-center py-12 border rounded-lg">
           <ServerIcon className="mx-auto h-12 w-12 text-muted-foreground" />
-          <h3 className="mt-2 text-sm font-semibold text-foreground">No servers found</h3>
+          <h3 className="mt-2 text-sm font-semibold text-foreground">{t('servers.table.empty.noResults.title')}</h3>
           <p className="mt-1 text-sm text-muted-foreground">
-            Try adjusting your search terms or filters.
+            {t('servers.table.empty.noResults.description')}
           </p>
         </div>
       ) : (
@@ -165,11 +167,11 @@ function ServersTable({ servers, pagination, isLoading, queryParams, onQueryChan
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Host</TableHead>
-                  <TableHead>Port</TableHead>
-                  <TableHead>Username</TableHead>
-                  <TableHead>Created</TableHead>
+                  <TableHead>{t('servers.table.headers.name')}</TableHead>
+                  <TableHead>{t('servers.table.headers.host')}</TableHead>
+                  <TableHead>{t('servers.table.headers.port')}</TableHead>
+                  <TableHead>{t('servers.table.headers.username')}</TableHead>
+                  <TableHead>{t('servers.table.headers.created')}</TableHead>
                   <TableHead className="w-[70px]"></TableHead>
                 </TableRow>
               </TableHeader>
@@ -214,7 +216,7 @@ function ServersTable({ servers, pagination, isLoading, queryParams, onQueryChan
                         <DropdownMenuContent align="end">
                           <DropdownMenuItem className="cursor-pointer">
                             <Edit className="mr-2 h-4 w-4" />
-                            Edit
+                            {t('servers.actions.edit')}
                           </DropdownMenuItem>
                           <DropdownMenuItem
                             className="cursor-pointer text-destructive"
@@ -222,7 +224,7 @@ function ServersTable({ servers, pagination, isLoading, queryParams, onQueryChan
                             disabled={deletingId === server.id}
                           >
                             <Trash2 className="mr-2 h-4 w-4" />
-                            {deletingId === server.id ? 'Deleting...' : 'Delete'}
+                            {deletingId === server.id ? t('servers.actions.deleting') : t('servers.actions.delete')}
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
@@ -248,10 +250,10 @@ function ServersTable({ servers, pagination, isLoading, queryParams, onQueryChan
       <DeleteDialog
         open={deleteDialogOpen}
         onOpenChange={setDeleteDialogOpen}
-        title="Delete Server"
-        description={`Are you sure you want to delete "${serverToDelete?.name}"? This action cannot be undone.`}
+        title={t('servers.delete.dialog.title')}
+        description={t('servers.delete.dialog.description', { name: serverToDelete?.name || '' })}
         onConfirm={handleDeleteConfirm}
-        confirmText={deletingId ? 'Deleting...' : 'Delete'}
+        confirmText={deletingId ? t('servers.delete.dialog.buttons.deleting') : t('servers.delete.dialog.buttons.delete')}
         isDeleting={!!deletingId}
         variant="destructive"
         icon={Trash2}

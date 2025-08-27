@@ -19,24 +19,26 @@ import { setActiveServer, clearActiveServer } from '@/redux/features/servers/ser
 import { Skeleton } from '@/components/ui/skeleton';
 import { ServerIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useTranslation } from '@/hooks/use-translation';
 
 interface ServerSelectorProps {
   className?: string;
 }
 
-const getStatusLabel = (status: string) => {
+const getStatusLabel = (status: string, t: (key: string) => string) => {
   switch (status) {
     case 'active':
-      return 'Active';
+      return t('servers.selector.status.active');
     case 'maintenance':
-      return 'Maintenance';
+      return t('servers.selector.status.maintenance');
     case 'inactive':
     default:
-      return 'Inactive';
+      return t('servers.selector.status.inactive');
   }
 };
 
 export function ServerSelector({ className }: ServerSelectorProps) {
+  const { t } = useTranslation();
   const dispatch = useAppDispatch();
   const activeServer = useAppSelector((state) => state.server.activeServer);
 
@@ -105,11 +107,11 @@ export function ServerSelector({ className }: ServerSelectorProps) {
       <SelectTrigger className={cn('w-[200px]', className)}>
         <div className="flex items-center gap-2">
           <ServerIcon className="h-4 w-4" />
-          <SelectValue placeholder="Select server">
+          <SelectValue placeholder={t('servers.selector.placeholder')}>
             {activeServer ? (
               <span>{activeServer.name}</span>
             ) : (
-              'Default'
+              t('servers.selector.default')
             )}
           </SelectValue>
         </div>
@@ -117,14 +119,14 @@ export function ServerSelector({ className }: ServerSelectorProps) {
       <SelectContent>
         <SelectItem value="default">
           <div className="flex items-center gap-2">
-            <span>Default</span>
+            <span>{t('servers.selector.default')}</span>
           </div>
         </SelectItem>
         {servers.map((server: Server) => (
           <SelectItem key={server.id} value={server.id}>
             <div className="flex items-center gap-2">
               <span>{server.name}</span>
-              <span className="text-xs text-muted-foreground">{getStatusLabel(server.status)}</span>
+              <span className="text-xs text-muted-foreground">{getStatusLabel(server.status, t)}</span>
             </div>
           </SelectItem>
         ))}

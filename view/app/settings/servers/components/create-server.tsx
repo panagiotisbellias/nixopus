@@ -28,7 +28,6 @@ import { toast } from 'sonner';
 import { useCreateServerMutation } from '@/redux/services/settings/serversApi';
 import { useTranslation } from '@/hooks/use-translation';
 import { Server, AuthenticationType } from '@/redux/types/server';
-import { useAppSelector } from '@/redux/hooks';
 import { Plus } from 'lucide-react';
 
 interface CreateServerDialogProps {
@@ -46,15 +45,15 @@ function CreateServerDialog({ open, setOpen, id, data }: CreateServerDialogProps
   const serverFormSchema = z.object({
     name: z
       .string()
-      .min(2, { message: 'Server name must be at least 2 characters' })
-      .max(255, { message: 'Server name must be less than 255 characters' }),
+      .min(2, { message: t('servers.create.dialog.validation.nameRequired') })
+      .max(255, { message: t('servers.create.dialog.validation.nameMaxLength') }),
     description: z
       .string()
-      .max(500, { message: 'Description must be less than 500 characters' })
+      .max(500, { message: t('servers.create.dialog.validation.descriptionMaxLength') })
       .optional(),
     host: z
       .string()
-      .min(1, { message: 'Host is required' })
+      .min(1, { message: t('servers.create.dialog.validation.hostRequired') })
       .refine(
         (host) => {
           // Check if it's a valid IP address
@@ -63,16 +62,16 @@ function CreateServerDialog({ open, setOpen, id, data }: CreateServerDialogProps
           const hostnameRegex = /^[a-zA-Z0-9]([a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?(\.[a-zA-Z0-9]([a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?)*$/;
           return ipRegex.test(host) || hostnameRegex.test(host);
         },
-        { message: 'Invalid IP address or hostname' }
+        { message: t('servers.create.dialog.validation.invalidHost') }
       ),
     port: z
       .number()
-      .min(1, { message: 'Port must be between 1 and 65535' })
-      .max(65535, { message: 'Port must be between 1 and 65535' }),
+      .min(1, { message: t('servers.create.dialog.validation.portRange') })
+      .max(65535, { message: t('servers.create.dialog.validation.portRange') }),
     username: z
       .string()
-      .min(1, { message: 'Username is required' })
-      .regex(/^[a-zA-Z0-9\-_]+$/, { message: 'Username can only contain alphanumeric characters, hyphens, and underscores' }),
+      .min(1, { message: t('servers.create.dialog.validation.usernameRequired') })
+      .regex(/^[a-zA-Z0-9\-_]+$/, { message: t('servers.create.dialog.validation.usernameInvalid') }),
     ssh_password: z
       .string()
       .optional(),
@@ -86,7 +85,7 @@ function CreateServerDialog({ open, setOpen, id, data }: CreateServerDialogProps
       return data.ssh_private_key_path && data.ssh_private_key_path.length > 0;
     }
   }, {
-    message: 'Either SSH password or private key path is required',
+    message: t('servers.create.dialog.validation.authRequired'),
     path: authType === AuthenticationType.PASSWORD ? ['ssh_password'] : ['ssh_private_key_path']
   });
 
@@ -118,11 +117,11 @@ function CreateServerDialog({ open, setOpen, id, data }: CreateServerDialogProps
       };
 
       await createServer(serverData).unwrap();
-      toast.success('Server created successfully');
+      toast.success(t('servers.messages.createSuccess'));
       form.reset();
       setOpen?.(false);
     } catch (error) {
-      toast.error('Failed to create server');
+      toast.error(t('servers.messages.createError'));
     }
   }
 
@@ -132,17 +131,17 @@ function CreateServerDialog({ open, setOpen, id, data }: CreateServerDialogProps
         <DialogTrigger asChild>
           <Button variant="outline">
             <Plus className="mr-2 h-4 w-4" />
-            Add Server
+            {t('servers.create.button')}
           </Button>
         </DialogTrigger>
       )}
       <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>
-            {!id ? 'Add New Server' : 'Update Server'}
+            {!id ? t('servers.create.dialog.title.add') : t('servers.create.dialog.title.update')}
           </DialogTitle>
           <DialogDescription>
-            Configure your server connection details. Choose either password or private key authentication.
+            {t('servers.create.dialog.description')}
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
@@ -152,9 +151,9 @@ function CreateServerDialog({ open, setOpen, id, data }: CreateServerDialogProps
               name="name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Server Name</FormLabel>
+                  <FormLabel>{t('servers.create.dialog.fields.name.label')}</FormLabel>
                   <FormControl>
-                    <Input placeholder="My Production Server" {...field} />
+                    <Input placeholder={t('servers.create.dialog.fields.name.placeholder')} {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -166,11 +165,11 @@ function CreateServerDialog({ open, setOpen, id, data }: CreateServerDialogProps
               name="description"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Description (Optional)</FormLabel>
+                  <FormLabel>{t('servers.create.dialog.fields.description.label')}</FormLabel>
                   <FormControl>
                     <textarea 
                       className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                      placeholder="Short Details to identify this server" 
+                      placeholder={t('servers.create.dialog.fields.description.placeholder')} 
                       {...field} 
                     />
                   </FormControl>
@@ -185,9 +184,9 @@ function CreateServerDialog({ open, setOpen, id, data }: CreateServerDialogProps
                 name="host"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Host</FormLabel>
+                    <FormLabel>{t('servers.create.dialog.fields.host.label')}</FormLabel>
                     <FormControl>
-                      <Input placeholder="192.168.1.100 or server.com" {...field} />
+                      <Input placeholder={t('servers.create.dialog.fields.host.placeholder')} {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -199,11 +198,11 @@ function CreateServerDialog({ open, setOpen, id, data }: CreateServerDialogProps
                 name="port"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Port</FormLabel>
+                    <FormLabel>{t('servers.create.dialog.fields.port.label')}</FormLabel>
                     <FormControl>
                       <Input 
                         type="number" 
-                        placeholder="22" 
+                        placeholder={t('servers.create.dialog.fields.port.placeholder')} 
                         {...field}
                         onChange={(e) => field.onChange(parseInt(e.target.value) || 22)}
                       />
@@ -219,9 +218,9 @@ function CreateServerDialog({ open, setOpen, id, data }: CreateServerDialogProps
               name="username"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Username</FormLabel>
+                  <FormLabel>{t('servers.create.dialog.fields.username.label')}</FormLabel>
                   <FormControl>
-                    <Input placeholder="root" {...field} />
+                    <Input placeholder={t('servers.create.dialog.fields.username.placeholder')} {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -229,7 +228,7 @@ function CreateServerDialog({ open, setOpen, id, data }: CreateServerDialogProps
             />
 
             <div className="space-y-4">
-              <Label className="text-sm font-medium">Authentication Method</Label>
+              <Label className="text-sm font-medium">{t('servers.create.dialog.fields.authMethod.label')}</Label>
               <div className="flex space-x-6">
                 <div className="flex items-center space-x-2">
                   <input
@@ -241,7 +240,7 @@ function CreateServerDialog({ open, setOpen, id, data }: CreateServerDialogProps
                     onChange={(e) => setAuthType(e.target.value as AuthenticationType)}
                     className="h-4 w-4 text-primary focus:ring-primary border-input"
                   />
-                  <Label htmlFor="password">Password</Label>
+                  <Label htmlFor="password">{t('servers.create.dialog.fields.authMethod.password')}</Label>
                 </div>
                 <div className="flex items-center space-x-2">
                   <input
@@ -253,7 +252,7 @@ function CreateServerDialog({ open, setOpen, id, data }: CreateServerDialogProps
                     onChange={(e) => setAuthType(e.target.value as AuthenticationType)}
                     className="h-4 w-4 text-primary focus:ring-primary border-input"
                   />
-                  <Label htmlFor="private-key">Private Key</Label>
+                  <Label htmlFor="private-key">{t('servers.create.dialog.fields.authMethod.privateKey')}</Label>
                 </div>
               </div>
 
@@ -263,9 +262,9 @@ function CreateServerDialog({ open, setOpen, id, data }: CreateServerDialogProps
                   name="ssh_password"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>SSH Password</FormLabel>
+                      <FormLabel>{t('servers.create.dialog.fields.sshPassword.label')}</FormLabel>
                       <FormControl>
-                        <Input type="password" placeholder="Your SSH password" {...field} />
+                        <Input type="password" placeholder={t('servers.create.dialog.fields.sshPassword.placeholder')} {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -277,9 +276,9 @@ function CreateServerDialog({ open, setOpen, id, data }: CreateServerDialogProps
                   name="ssh_private_key_path"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Private Key Path</FormLabel>
+                      <FormLabel>{t('servers.create.dialog.fields.privateKeyPath.label')}</FormLabel>
                       <FormControl>
-                        <Input placeholder="/path/to/private/key" {...field} />
+                        <Input placeholder={t('servers.create.dialog.fields.privateKeyPath.placeholder')} {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -297,10 +296,10 @@ function CreateServerDialog({ open, setOpen, id, data }: CreateServerDialogProps
                   setOpen?.(false);
                 }}
               >
-                Cancel
+                {t('servers.create.dialog.buttons.cancel')}
               </Button>
               <Button type="submit" disabled={isLoading}>
-                {isLoading ? 'Creating...' : 'Create Server'}
+                {isLoading ? t('servers.create.dialog.buttons.creating') : t('servers.create.dialog.buttons.create')}
               </Button>
             </DialogFooter>
           </form>
