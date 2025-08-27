@@ -105,7 +105,7 @@ func (v *Validator) ValidateUsername(username string) error {
 	return nil
 }
 
-// ValidateSSHAuth validates SSH authentication methods
+// ValidateSSHAuth validates SSH authentication methods for creation (requires auth)
 func (v *Validator) ValidateSSHAuth(password *string, privateKeyPath *string) error {
 	hasPassword := password != nil && *password != ""
 	hasPrivateKey := privateKeyPath != nil && *privateKeyPath != ""
@@ -115,6 +115,31 @@ func (v *Validator) ValidateSSHAuth(password *string, privateKeyPath *string) er
 		return types.ErrMissingSSHAuth
 	}
 
+	if hasPassword && hasPrivateKey {
+		return types.ErrBothSSHAuthProvided
+	}
+
+	// Validate private key path if provided
+	if hasPrivateKey {
+		if !filepath.IsAbs(*privateKeyPath) {
+			return types.ErrInvalidSSHPrivateKeyPath
+		}
+		// Check file extension
+		ext := filepath.Ext(*privateKeyPath)
+		if ext != "" && !strings.Contains(".pem.key.ppk", ext) {
+			return types.ErrInvalidSSHPrivateKeyPath
+		}
+	}
+
+	return nil
+}
+
+// ValidateSSHAuthForUpdate validates SSH authentication methods for updates (optional)
+func (v *Validator) ValidateSSHAuthForUpdate(password *string, privateKeyPath *string) error {
+	hasPassword := password != nil && *password != ""
+	hasPrivateKey := privateKeyPath != nil && *privateKeyPath != ""
+
+	// In update mode, auth fields are optional - only validate if both are provided
 	if hasPassword && hasPrivateKey {
 		return types.ErrBothSSHAuthProvided
 	}
@@ -197,7 +222,7 @@ func (v *Validator) ValidateUpdateServerRequest(req types.UpdateServerRequest) e
 		return err
 	}
 
-	if err := v.ValidateSSHAuth(req.SSHPassword, req.SSHPrivateKeyPath); err != nil {
+	if err := v.ValidateSSHAuthForUpdate(req.SSHPassword, req.SSHPrivateKeyPath); err != nil {
 		return err
 	}
 

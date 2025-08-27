@@ -84,7 +84,17 @@ func (s *ServersService) UpdateServer(req types.UpdateServerRequest, userID stri
 		}
 	}
 
-	// Update the server
+	// Update the server - preserve existing auth credentials if not provided
+	sshPassword := existingServer.SSHPassword
+	if req.SSHPassword != nil {
+		sshPassword = req.SSHPassword
+	}
+
+	sshPrivateKeyPath := existingServer.SSHPrivateKeyPath
+	if req.SSHPrivateKeyPath != nil {
+		sshPrivateKeyPath = req.SSHPrivateKeyPath
+	}
+
 	updatedServer := &shared_types.Server{
 		ID:                existingServer.ID,
 		Name:              req.Name,
@@ -92,8 +102,9 @@ func (s *ServersService) UpdateServer(req types.UpdateServerRequest, userID stri
 		Host:              req.Host,
 		Port:              req.Port,
 		Username:          req.Username,
-		SSHPassword:       req.SSHPassword,
-		SSHPrivateKeyPath: req.SSHPrivateKeyPath,
+		SSHPassword:       sshPassword,
+		SSHPrivateKeyPath: sshPrivateKeyPath,
+		Status:            existingServer.Status,
 		CreatedAt:         existingServer.CreatedAt,
 		UpdatedAt:         time.Now(),
 		DeletedAt:         existingServer.DeletedAt,
@@ -101,7 +112,7 @@ func (s *ServersService) UpdateServer(req types.UpdateServerRequest, userID stri
 		OrganizationID:    existingServer.OrganizationID,
 	}
 
-	if err := txStorage.UpdateServer(req.ID, req.Name); err != nil {
+	if err := txStorage.UpdateServer(updatedServer); err != nil {
 		s.logger.Log(logger.Error, "error while updating server", err.Error())
 		return nil, err
 	}

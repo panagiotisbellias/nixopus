@@ -18,7 +18,7 @@ type ServerStorage struct {
 type ServerStorageInterface interface {
 	CreateServer(server *shared_types.Server) error
 	GetServer(id string) (*shared_types.Server, error)
-	UpdateServer(ID string, Name string) error
+	UpdateServer(server *shared_types.Server) error
 	UpdateServerStatus(ID string, Status string) error
 	DeleteServer(server *shared_types.Server) error
 	GetServers(OrganizationID string, UserID uuid.UUID) ([]shared_types.Server, error)
@@ -66,14 +66,11 @@ func (s *ServerStorage) GetServer(id string) (*shared_types.Server, error) {
 	return &server, nil
 }
 
-func (s *ServerStorage) UpdateServer(ID string, Name string) error {
-	var server shared_types.Server
-	err := s.getDB().NewSelect().Model(&server).Where("id = ? AND deleted_at IS NULL", ID).Scan(s.Ctx)
-	if err != nil {
-		return err
-	}
-	server.Name = Name
-	_, err = s.getDB().NewUpdate().Model(&server).Where("id = ? AND deleted_at IS NULL", ID).Exec(s.Ctx)
+func (s *ServerStorage) UpdateServer(server *shared_types.Server) error {
+	_, err := s.getDB().NewUpdate().Model(server).
+		Column("name", "description", "host", "port", "username", "ssh_password", "ssh_private_key_path", "updated_at").
+		Where("id = ? AND deleted_at IS NULL", server.ID).
+		Exec(s.Ctx)
 	if err != nil {
 		return err
 	}
