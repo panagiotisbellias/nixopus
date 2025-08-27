@@ -13,11 +13,10 @@ import (
 )
 
 type ContainerController struct {
-	store         *shared_storage.Store
-	dockerService *docker.DockerService
-	ctx           context.Context
-	logger        logger.Logger
-	notification  *notification.NotificationManager
+	store        *shared_storage.Store
+	ctx          context.Context
+	logger       logger.Logger
+	notification *notification.NotificationManager
 }
 
 func NewContainerController(
@@ -27,27 +26,43 @@ func NewContainerController(
 	notificationManager *notification.NotificationManager,
 ) *ContainerController {
 	return &ContainerController{
-		store:         store,
-		dockerService: docker.NewDockerService(),
-		ctx:           ctx,
-		logger:        l,
-		notification:  notificationManager,
+		store:        store,
+		ctx:          ctx,
+		logger:       l,
+		notification: notificationManager,
 	}
 }
 
-func (c *ContainerController) isProtectedContainer(containerID string, action string) (*shared_types.Response, bool) {
-    details, err := c.dockerService.GetContainerById(containerID)
-    if err != nil {
-        return nil, false
-    }
-    name := strings.ToLower(details.Name)
-    if strings.Contains(name, "nixopus") {
-        c.logger.Log(logger.Info, fmt.Sprintf("Skipping %s for protected container", action), details.Name)
-        return &shared_types.Response{
-            Status:  "success",
-            Message: "Operation skipped for protected container",
-            Data:    map[string]string{"status": "skipped"},
-        }, true
-    }
-    return nil, false
+// getDockerService creates a Docker service based on the request context
+// If a server is in the context, it will use SSH tunnel, otherwise local connection
+func (c *ContainerController) getDockerService(ctx context.Context) (*docker.DockerService, error) {
+	dockerService, err := docker.NewDockerServiceWithContext(ctx)
+	if err != nil {
+		c.logger.Log(logger.Error, "Failed to create Docker service with context", err.Error())
+		return docker.NewDockerService(), nil
+	}
+	return dockerService, nil
+}
+
+func (c *ContainerController) isProtectedContainer(ctx context.Context, containerID string, action string) (*shared_types.Response, bool) {
+	dockerService, err := c.getDockerService(ctx)
+	if err != nil {
+		return nil, false
+	}
+	defer dockerService.Close()
+
+	details, err := dockerService.GetContainerById(containerID)
+	if err != nil {
+		return nil, false
+	}
+	name := strings.ToLower(details.Name)
+	if strings.Contains(name, "nixopus") {
+		c.logger.Log(logger.Info, fmt.Sprintf("Skipping %s for protected container", action), details.Name)
+		return &shared_types.Response{
+			Status:  "success",
+			Message: "Operation skipped for protected container",
+			Data:    map[string]string{"status": "skipped"},
+		}, true
+	}
+	return nil, false
 }

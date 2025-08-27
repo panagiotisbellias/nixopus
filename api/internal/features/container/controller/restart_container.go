@@ -12,7 +12,16 @@ import (
 func (c *ContainerController) RestartContainer(f fuego.ContextNoBody) (*shared_types.Response, error) {
 	containerID := f.PathParam("container_id")
 
-	err := c.dockerService.RestartContainer(containerID, container.StopOptions{})
+	dockerService, err := c.getDockerService(f.Context())
+	if err != nil {
+		return nil, fuego.HTTPError{
+			Err:    err,
+			Status: http.StatusInternalServerError,
+		}
+	}
+	defer dockerService.Close()
+
+	err = dockerService.RestartContainer(containerID, container.StopOptions{})
 	if err != nil {
 		c.logger.Log(logger.Error, err.Error(), "")
 		return nil, fuego.HTTPError{

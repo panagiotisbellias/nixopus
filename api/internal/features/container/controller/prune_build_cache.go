@@ -22,7 +22,17 @@ func (c *ContainerController) PruneBuildCache(f fuego.ContextWithBody[PruneBuild
 			Status: http.StatusBadRequest,
 		}
 	}
-	err = c.dockerService.PruneBuildCache(types.BuildCachePruneOptions{
+
+	dockerService, err := c.getDockerService(f.Context())
+	if err != nil {
+		return nil, fuego.HTTPError{
+			Err:    err,
+			Status: http.StatusInternalServerError,
+		}
+	}
+	defer dockerService.Close()
+
+	err = dockerService.PruneBuildCache(types.BuildCachePruneOptions{
 		All: req.All,
 	})
 	if err != nil {

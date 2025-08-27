@@ -4,8 +4,12 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"net"
+	"os"
+	"path/filepath"
+	"time"
 
-	"github.com/docker/docker/api/types"
+	dockertypes "github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/filters"
 	"github.com/docker/docker/api/types/image"
@@ -14,12 +18,22 @@ import (
 	v1 "github.com/opencontainers/image-spec/specs-go/v1"
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
 	"github.com/raghavyuva/nixopus-api/internal/features/ssh"
+	"github.com/raghavyuva/nixopus-api/internal/types"
 )
 
 type DockerService struct {
-	Cli    *client.Client
-	Ctx    context.Context
-	logger logger.Logger
+	Cli       *client.Client
+	Ctx       context.Context
+	logger    logger.Logger
+	sshTunnel *SSHTunnel
+	server    *types.Server
+}
+
+type SSHTunnel struct {
+	localSocket string
+	sshClient   *ssh.SSH
+	listener    net.Listener
+	cleanup     func() error
 }
 
 type DockerRepository interface {
@@ -33,7 +47,7 @@ type DockerRepository interface {
 	GetContainerById(containerID string) (container.InspectResponse, error)
 	GetImageById(imageID string, opts client.ImageInspectOption) (image.InspectResponse, error)
 
-	BuildImage(opts types.ImageBuildOptions, buildContext io.Reader) (types.ImageBuildResponse, error)
+	BuildImage(opts dockertypes.ImageBuildOptions, buildContext io.Reader) (dockertypes.ImageBuildResponse, error)
 	CreateContainer(config container.Config, hostConfig container.HostConfig, networkConfig network.NetworkingConfig, containerName string) (container.CreateResponse, error)
 	// CreateDeployment(deployment *deploy_types.CreateDeploymentRequest, userID uuid.UUID, contextPath string) error
 	ContainerLogs(ctx context.Context, containerID string, opts container.LogsOptions) (io.ReadCloser, error)
@@ -43,8 +57,9 @@ type DockerRepository interface {
 	ComposeDown(composeFilePath string) error
 	ComposeBuild(composeFilePath string, envVars map[string]string) error
 	RemoveImage(imageName string, opts image.RemoveOptions) error
-	PruneBuildCache(opts types.BuildCachePruneOptions) error
+	PruneBuildCache(opts dockertypes.BuildCachePruneOptions) error
 	PruneImages(opts filters.Args) (image.PruneReport, error)
+	Close() error
 }
 
 type DockerClient struct {
@@ -66,6 +81,48 @@ func NewDockerServiceWithClient(cli *client.Client, ctx context.Context, logger 
 		Ctx:    ctx,
 		logger: logger,
 	}
+}
+
+// NewDockerServiceWithSSH creates a new DockerService that connects to a remote Docker daemon over SSH
+func NewDockerServiceWithSSH(server *types.Server, ctx context.Context, logger logger.Logger) (*DockerService, error) {
+	if server == nil {
+		return NewDockerService(), nil
+	}
+
+	sshClient := ssh.NewSSHWithServer(server)
+	tunnel, err := createSSHTunnel(sshClient, logger)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create SSH tunnel: %w", err)
+	}
+
+	dockerClient, err := client.NewClientWithOpts(
+		client.WithHost("unix://"+tunnel.localSocket),
+		client.WithAPIVersionNegotiation(),
+	)
+	if err != nil {
+		tunnel.cleanup()
+		return nil, fmt.Errorf("failed to create Docker client: %w", err)
+	}
+
+	return &DockerService{
+		Cli:       dockerClient,
+		Ctx:       ctx,
+		logger:    logger,
+		sshTunnel: tunnel,
+		server:    server,
+	}, nil
+}
+
+// NewDockerServiceWithContext creates a DockerService based on context
+// If a server is found in context, it uses SSH tunnel, otherwise local connection
+func NewDockerServiceWithContext(ctx context.Context) (*DockerService, error) {
+	logger := logger.NewLogger()
+
+	if server := getServerFromContext(ctx); server != nil {
+		return NewDockerServiceWithSSH(server, ctx, logger)
+	}
+
+	return NewDockerService(), nil
 }
 
 // NewDockerClient creates a new docker client with the environment variables and
@@ -93,6 +150,98 @@ func NewDockerClient() *client.Client {
 	}
 
 	return cli
+}
+
+// createSSHTunnel creates an SSH tunnel to forward the remote Docker socket
+func createSSHTunnel(sshClient *ssh.SSH, logger logger.Logger) (*SSHTunnel, error) {
+	tempDir := os.TempDir()
+	localSocket := filepath.Join(tempDir, fmt.Sprintf("docker-ssh-%d.sock", time.Now().UnixNano()))
+
+	os.Remove(localSocket)
+
+	listener, err := net.Listen("unix", localSocket)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create local socket: %w", err)
+	}
+
+	tunnel := &SSHTunnel{
+		localSocket: localSocket,
+		sshClient:   sshClient,
+		listener:    listener,
+		cleanup: func() error {
+			listener.Close()
+			os.Remove(localSocket)
+			return nil
+		},
+	}
+
+	go tunnel.handleConnections(logger)
+
+	return tunnel, nil
+}
+
+// handleConnections manages the SSH tunnel connections
+func (t *SSHTunnel) handleConnections(lgr logger.Logger) {
+	for {
+		localConn, err := t.listener.Accept()
+		if err != nil {
+			lgr.Log(logger.Error, "SSH tunnel listener error", err.Error())
+			return
+		}
+
+		go t.forwardConnection(localConn, lgr)
+	}
+}
+
+// forwardConnection forwards a local connection through the SSH tunnel to the remote Docker socket
+func (t *SSHTunnel) forwardConnection(localConn net.Conn, lgr logger.Logger) {
+	defer localConn.Close()
+
+	sshConn, err := t.sshClient.Connect()
+	if err != nil {
+		lgr.Log(logger.Error, "Failed to establish SSH connection", err.Error())
+		return
+	}
+	defer sshConn.Close()
+
+	remoteConn, err := sshConn.Dial("unix", "/var/run/docker.sock")
+	if err != nil {
+		lgr.Log(logger.Error, "Failed to connect to remote Docker socket", err.Error())
+		return
+	}
+	defer remoteConn.Close()
+
+	done := make(chan struct{}, 2)
+
+	go func() {
+		io.Copy(remoteConn, localConn)
+		done <- struct{}{}
+	}()
+
+	go func() {
+		io.Copy(localConn, remoteConn)
+		done <- struct{}{}
+	}()
+
+	<-done
+}
+
+// getServerFromContext extracts server from context
+func getServerFromContext(ctx context.Context) *types.Server {
+	if server := ctx.Value(types.ServerIDKey); server != nil {
+		if s, ok := server.(*types.Server); ok {
+			return s
+		}
+	}
+	return nil
+}
+
+// Close cleans up the DockerService and any SSH tunnels
+func (s *DockerService) Close() error {
+	if s.sshTunnel != nil {
+		return s.sshTunnel.cleanup()
+	}
+	return nil
 }
 
 // ListAllContainers returns a list of all containers running on the host, along with their
@@ -219,7 +368,7 @@ func (s *DockerService) GetImageById(imageID string, opts client.ImageInspectOpt
 //
 //	types.ImageBuildResponse - the response containing the build details.
 //	error - an error if the build fails.
-func (s *DockerService) BuildImage(opts types.ImageBuildOptions, buildContext io.Reader) (types.ImageBuildResponse, error) {
+func (s *DockerService) BuildImage(opts dockertypes.ImageBuildOptions, buildContext io.Reader) (dockertypes.ImageBuildResponse, error) {
 	return s.Cli.ImageBuild(s.Ctx, buildContext, opts)
 }
 
@@ -266,13 +415,19 @@ func (s *DockerService) ContainerLogs(Ctx context.Context, containerID string, o
 
 // ComposeUp starts the Docker Compose services defined in the specified compose file
 func (s *DockerService) ComposeUp(composeFilePath string, envVars map[string]string) error {
-	client := ssh.NewSSH()
+	var sshClient *ssh.SSH
+	if s.server != nil {
+		sshClient = ssh.NewSSHWithServer(s.server)
+	} else {
+		sshClient = ssh.NewSSHWithContext(s.Ctx)
+	}
+
 	envVarsStr := ""
 	for k, v := range envVars {
 		envVarsStr += fmt.Sprintf("export %s=%s && ", k, v)
 	}
 	command := fmt.Sprintf("%sdocker compose -f %s up -d", envVarsStr, composeFilePath)
-	output, err := client.RunCommand(command)
+	output, err := sshClient.RunCommand(command)
 	if err != nil {
 		return fmt.Errorf("failed to start docker compose services: %v, output: %s", err, output)
 	}
@@ -281,9 +436,15 @@ func (s *DockerService) ComposeUp(composeFilePath string, envVars map[string]str
 
 // ComposeDown stops and removes the Docker Compose services
 func (s *DockerService) ComposeDown(composeFilePath string) error {
-	client := ssh.NewSSH()
+	var sshClient *ssh.SSH
+	if s.server != nil {
+		sshClient = ssh.NewSSHWithServer(s.server)
+	} else {
+		sshClient = ssh.NewSSHWithContext(s.Ctx)
+	}
+
 	command := fmt.Sprintf("docker compose -f %s down", composeFilePath)
-	output, err := client.RunCommand(command)
+	output, err := sshClient.RunCommand(command)
 	if err != nil {
 		return fmt.Errorf("failed to stop docker compose services: %v, output: %s", err, output)
 	}
@@ -292,13 +453,19 @@ func (s *DockerService) ComposeDown(composeFilePath string) error {
 
 // ComposeBuild builds the Docker Compose services
 func (s *DockerService) ComposeBuild(composeFilePath string, envVars map[string]string) error {
-	client := ssh.NewSSH()
+	var sshClient *ssh.SSH
+	if s.server != nil {
+		sshClient = ssh.NewSSHWithServer(s.server)
+	} else {
+		sshClient = ssh.NewSSHWithContext(s.Ctx)
+	}
+
 	envVarsStr := ""
 	for k, v := range envVars {
 		envVarsStr += fmt.Sprintf("export %s=%s && ", k, v)
 	}
 	command := fmt.Sprintf("%sdocker compose -f %s build", envVarsStr, composeFilePath)
-	output, err := client.RunCommand(command)
+	output, err := sshClient.RunCommand(command)
 	if err != nil {
 		return fmt.Errorf("failed to build docker compose services: %v, output: %s", err, output)
 	}
@@ -334,7 +501,7 @@ func (s *DockerService) RemoveImage(imageName string, opts image.RemoveOptions) 
 //
 // Parameters:
 
-func (s *DockerService) PruneBuildCache(opts types.BuildCachePruneOptions) error {
+func (s *DockerService) PruneBuildCache(opts dockertypes.BuildCachePruneOptions) error {
 	_, err := s.Cli.BuildCachePrune(s.Ctx, opts)
 	return err
 }

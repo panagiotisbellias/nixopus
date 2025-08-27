@@ -23,7 +23,16 @@ func (c *ContainerController) GetContainerLogs(f fuego.ContextWithBody[types.Con
 		}
 	}
 
-	logsReader, err := c.dockerService.GetContainerLogs(req.ID, container.LogsOptions{
+	dockerService, err := c.getDockerService(f.Context())
+	if err != nil {
+		return nil, fuego.HTTPError{
+			Err:    err,
+			Status: http.StatusInternalServerError,
+		}
+	}
+	defer dockerService.Close()
+
+	logsReader, err := dockerService.GetContainerLogs(req.ID, container.LogsOptions{
 		Follow:     req.Follow,
 		Tail:       strconv.Itoa(req.Tail),
 		Since:      req.Since,

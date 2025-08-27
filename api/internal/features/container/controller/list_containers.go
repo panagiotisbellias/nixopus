@@ -10,7 +10,15 @@ import (
 )
 
 func (c *ContainerController) ListContainers(f fuego.ContextNoBody) (*shared_types.Response, error) {
-	containers, err := c.dockerService.ListAllContainers()
+	dockerService, err := c.getDockerService(f.Context())
+	if err != nil {
+		return nil, fuego.HTTPError{
+			Err:    err,
+			Status: http.StatusInternalServerError,
+		}
+	}
+	containers, err := dockerService.ListAllContainers()
+	defer dockerService.Close()
 	if err != nil {
 		c.logger.Log(logger.Error, err.Error(), "")
 		return nil, fuego.HTTPError{
@@ -21,7 +29,7 @@ func (c *ContainerController) ListContainers(f fuego.ContextNoBody) (*shared_typ
 
 	var result []types.Container
 	for _, container := range containers {
-		containerInfo, err := c.dockerService.GetContainerById(container.ID)
+		containerInfo, err := dockerService.GetContainerById(container.ID)
 		if err != nil {
 			c.logger.Log(logger.Error, "Error inspecting container", container.ID)
 			continue

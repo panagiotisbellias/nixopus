@@ -15,6 +15,12 @@ func NewDashboardMonitor(conn *websocket.Conn, log logger.Logger, server *types.
 	ssh_client := sshpkg.NewSSHWithServer(server)
 	ctx, cancel := context.WithCancel(context.Background())
 
+	dockerService, err := docker.NewDockerServiceWithSSH(server, ctx, log)
+	if err != nil {
+		cancel()
+		return nil, err
+	}
+
 	monitor := &DashboardMonitor{
 		conn:          conn,
 		sshpkg:        ssh_client,
@@ -23,7 +29,7 @@ func NewDashboardMonitor(conn *websocket.Conn, log logger.Logger, server *types.
 		cancel:        cancel,
 		Interval:      time.Second * 10,
 		Operations:    AllOperations,
-		dockerService: docker.NewDockerService(),
+		dockerService: dockerService,
 	}
 
 	return monitor, nil

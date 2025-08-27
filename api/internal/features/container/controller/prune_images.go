@@ -34,7 +34,16 @@ func (c *ContainerController) PruneImages(f fuego.ContextWithBody[PruneImagesReq
 		filterArgs.Add("dangling", "true")
 	}
 
-	pruneReport, err := c.dockerService.PruneImages(filterArgs)
+	dockerService, err := c.getDockerService(f.Context())
+	if err != nil {
+		return nil, fuego.HTTPError{
+			Err:    err,
+			Status: http.StatusInternalServerError,
+		}
+	}
+	defer dockerService.Close()
+
+	pruneReport, err := dockerService.PruneImages(filterArgs)
 	if err != nil {
 		c.logger.Log(logger.Error, err.Error(), "")
 		return nil, fuego.HTTPError{

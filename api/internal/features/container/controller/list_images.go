@@ -26,9 +26,18 @@ func (c *ContainerController) ListImages(f fuego.ContextWithBody[ListImagesReque
 		}
 	}
 
+	dockerService, err := c.getDockerService(f.Context())
+	if err != nil {
+		return nil, fuego.HTTPError{
+			Err:    err,
+			Status: http.StatusInternalServerError,
+		}
+	}
+	defer dockerService.Close()
+
 	filterArgs := filters.NewArgs()
 	if req.ContainerID != "" {
-		_, err := c.dockerService.GetContainerById(req.ContainerID)
+		_, err := dockerService.GetContainerById(req.ContainerID)
 		if err != nil {
 			return nil, fuego.HTTPError{
 				Err:    err,
@@ -45,7 +54,7 @@ func (c *ContainerController) ListImages(f fuego.ContextWithBody[ListImagesReque
 		filterArgs.Add("reference", pattern)
 	}
 
-	images := c.dockerService.ListAllImages(image.ListOptions{
+	images := dockerService.ListAllImages(image.ListOptions{
 		All:     req.All,
 		Filters: filterArgs,
 	})

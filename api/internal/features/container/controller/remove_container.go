@@ -12,11 +12,20 @@ import (
 func (c *ContainerController) RemoveContainer(f fuego.ContextNoBody) (*shared_types.Response, error) {
 	containerID := f.PathParam("container_id")
 
-    if resp, skipped := c.isProtectedContainer(containerID, "remove"); skipped {
-        return resp, nil
-    }
+	dockerService, err := c.getDockerService(f.Context())
+	if err != nil {
+		return nil, fuego.HTTPError{
+			Err:    err,
+			Status: http.StatusInternalServerError,
+		}
+	}
+	defer dockerService.Close()
 
-	err := c.dockerService.RemoveContainer(containerID, container.RemoveOptions{Force: true})
+	if resp, skipped := c.isProtectedContainer(c.ctx, containerID, "remove"); skipped {
+		return resp, nil
+	}
+
+	err = dockerService.RemoveContainer(containerID, container.RemoveOptions{Force: true})
 	if err != nil {
 		c.logger.Log(logger.Error, err.Error(), "")
 		return nil, fuego.HTTPError{
