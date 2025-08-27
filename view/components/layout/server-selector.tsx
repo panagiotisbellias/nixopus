@@ -16,6 +16,19 @@ import {
 } from '@/redux/services/settings/serversApi';
 import { useAppSelector, useAppDispatch } from '@/redux/hooks';
 import { setActiveServer, clearActiveServer } from '@/redux/features/servers/serverSlice';
+
+import { authApi } from '@/redux/services/users/authApi';
+import { userApi } from '@/redux/services/users/userApi';
+import { notificationApi } from '@/redux/services/settings/notificationApi';
+import { domainsApi } from '@/redux/services/settings/domainsApi';
+import { serversApi } from '@/redux/services/settings/serversApi';
+import { GithubConnectorApi } from '@/redux/services/connector/githubConnectorApi';
+import { deployApi } from '@/redux/services/deploy/applicationsApi';
+import { fileManagersApi } from '@/redux/services/file-manager/fileManagersApi';
+import { auditApi } from '@/redux/services/audit';
+import { FeatureFlagsApi } from '@/redux/services/feature-flags/featureFlagsApi';
+import { containerApi } from '@/redux/services/container/containerApi';
+import { imagesApi } from '@/redux/services/container/imagesApi';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ServerIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -63,6 +76,25 @@ export function ServerSelector({ className }: ServerSelectorProps) {
     }
   }, [apiActiveServer, activeServer, dispatch]);
 
+  const invalidateAllCaches = () => {
+    try {
+      dispatch(authApi.util.invalidateTags([{ type: 'Authentication', id: 'LIST' }]));
+      dispatch(userApi.util.invalidateTags([{ type: 'User', id: 'LIST' }]));
+      dispatch(notificationApi.util.invalidateTags([{ type: 'Notification', id: 'LIST' }]));
+      dispatch(domainsApi.util.invalidateTags([{ type: 'Domains', id: 'LIST' }]));
+      dispatch(serversApi.util.invalidateTags([{ type: 'Servers', id: 'LIST' }, { type: 'Servers', id: 'ACTIVE' }]));
+      dispatch(GithubConnectorApi.util.invalidateTags([{ type: 'GithubConnector', id: 'LIST' }]));
+      dispatch(deployApi.util.invalidateTags([{ type: 'Deploy', id: 'LIST' }, { type: 'Applications', id: 'LIST' }]));
+      dispatch(fileManagersApi.util.invalidateTags([{ type: 'FileListAll', id: 'LIST' }]));
+      dispatch(auditApi.util.invalidateTags([{ type: 'AuditLogs', id: 'LIST' }]));
+      dispatch(FeatureFlagsApi.util.invalidateTags([{ type: 'FeatureFlags', id: 'LIST' }]));
+      dispatch(containerApi.util.invalidateTags([{ type: 'Container', id: 'LIST' }]));
+      dispatch(imagesApi.util.invalidateTags(['Images']));
+    } catch (error) {
+      console.error('Failed to invalidate cache:', error);
+    }
+  };
+
   const handleServerChange = async (value: string) => {
     if (value === 'default') {
       if (activeServer) {
@@ -72,6 +104,9 @@ export function ServerSelector({ className }: ServerSelectorProps) {
             status: 'inactive'
           }).unwrap();
           dispatch(clearActiveServer());
+          // hack to invalidate caches instantly..
+          invalidateAllCaches();
+          invalidateAllCaches();
         } catch (error) {
           console.error('Failed to deactivate server:', error);
         }
@@ -84,6 +119,9 @@ export function ServerSelector({ className }: ServerSelectorProps) {
             id: selectedServer.id,
             status: 'active'
           }).unwrap();
+          // hack to invalidate caches instantly..
+          invalidateAllCaches();
+          invalidateAllCaches();
         } catch (error) {
           console.error('Failed to activate server:', error);
         }
