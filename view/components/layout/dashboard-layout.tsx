@@ -24,6 +24,7 @@ import { useTour } from '@/hooks/useTour';
 import { Button } from '@/components/ui/button';
 import { HelpCircle } from 'lucide-react';
 import { useAppSelector } from '@/redux/hooks';
+
 import { AnyPermissionGuard } from '@/components/rbac/PermissionGuard';
 import { ModeToggler } from '@/components/ui/theme-toggler';
 import { RBACGuard } from '@/components/rbac/RBACGuard';
@@ -36,8 +37,6 @@ enum TERMINAL_POSITION {
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
-  const { t } = useTranslation();
-  const user = useAppSelector((state) => state.auth.user);
   const {
     addTeamModalOpen,
     setAddTeamModalOpen,
@@ -55,6 +54,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const [TerminalPosition, setTerminalPosition] = React.useState(TERMINAL_POSITION.BOTTOM);
   const [fitAddonRef, setFitAddonRef] = React.useState<any | null>(null);
   const { startTour } = useTour();
+
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 't' && e.ctrlKey) {
