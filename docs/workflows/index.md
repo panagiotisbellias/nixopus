@@ -27,7 +27,7 @@ All workflows live in the [`.github/workflows/`](https://github.com/raghavyuva/n
   3. Build Docker images (API + Web UI)  
   4. Push images to GHCR  
 - **Secrets/Dependencies:** `GHCR_TOKEN` (or `GITHUB_TOKEN` with package write permissions).  
-- **Link:** [Workflow file](.github/workflows/build_container.yml)  
+- **Link:** [Workflow file](https://github.com/raghavyuva/nixopus/tree/master/.github/workflows/build_container.yml)  
 
 ---
 
@@ -39,7 +39,7 @@ All workflows live in the [`.github/workflows/`](https://github.com/raghavyuva/n
   2. Trigger Coderabbit API call  
   3. Post review results as PR comments  
 - **Secrets/Dependencies:** `CODERABBIT_API_KEY` (if required).  
-- **Link:** [Workflow file](.github/workflows/coderabbit.yml)  
+- **Link:** [Workflow file](https://github.com/raghavyuva/nixopus/tree/master/.github/workflows/coderabbit.yml)  
 
 ---
 
@@ -51,7 +51,7 @@ All workflows live in the [`.github/workflows/`](https://github.com/raghavyuva/n
   2. Install Node.js + dependencies  
   3. Run VitePress build  
   4. Deploy static site to GitHub Pages  
-- **Link:** [Workflow file](.github/workflows/docs.yml)  
+- **Link:** [Workflow file](https://github.com/raghavyuva/nixopus/tree/master/.github/workflows/docs.yml)  
 
 ---
 
@@ -64,7 +64,7 @@ All workflows live in the [`.github/workflows/`](https://github.com/raghavyuva/n
   3. Run `prettier` on frontend code  
   4. Run formatter on CLI  
   5. Auto-commit changes (if any)  
-- **Link:** [Workflow file](.github/workflows/format.yaml)  
+- **Link:** [Workflow file](https://github.com/raghavyuva/nixopus/tree/master/.github/workflows/format.yaml)  
 
 ---
 
@@ -76,7 +76,7 @@ All workflows live in the [`.github/workflows/`](https://github.com/raghavyuva/n
   2. Load `.github/labeler.yml` rules  
   3. Apply matching labels to PR  
 - **Dependencies:** `.github/labeler.yml` configuration file.  
-- **Link:** [Workflow file](.github/workflows/labeler.yml)  
+- **Link:** [Workflow file](https://github.com/raghavyuva/nixopus/tree/master/.github/workflows/labeler.yml)  
 
 ---
 
@@ -89,7 +89,7 @@ All workflows live in the [`.github/workflows/`](https://github.com/raghavyuva/n
   3. Build CLI packages (`.deb`, `.rpm`, etc.) with `fpm`  
   4. Upload release artifacts to GitHub Releases  
 - **Artifacts:** Release artifacts uploaded to GitHub Releases.  
-- **Link:** [Workflow file](.github/workflows/release-cli.yml)  
+- **Link:** [Workflow file](https://github.com/raghavyuva/nixopus/tree/master/.github/workflows/release-cli.yml)  
 
 ---
 
@@ -101,7 +101,7 @@ All workflows live in the [`.github/workflows/`](https://github.com/raghavyuva/n
   2. Generate changelog  
   3. Create prerelease tag  
   4. Publish GitHub prerelease  
-- **Link:** [Workflow file](.github/workflows/release.yml)  
+- **Link:** [Workflow file](https://github.com/raghavyuva/nixopus/tree/master/.github/workflows/release.yml)  
 
 ---
 
@@ -113,7 +113,7 @@ All workflows live in the [`.github/workflows/`](https://github.com/raghavyuva/n
   2. Run Trivy scan for dependencies  
   3. Run TruffleHog scan for secrets  
   4. Upload scan results to workflow logs  
-- **Link:** [Workflow file](.github/workflows/security.yml)  
+- **Link:** [Workflow file](https://github.com/raghavyuva/nixopus/tree/master/.github/workflows/security.yml)  
 
 ---
 
@@ -125,7 +125,7 @@ All workflows live in the [`.github/workflows/`](https://github.com/raghavyuva/n
   2. Set up Go environment  
   3. Run `go test ./...`  
   4. Report test results in workflow logs  
-- **Link:** [Workflow file](.github/workflows/test.yaml)  
+- **Link:** [Workflow file](https://github.com/raghavyuva/nixopus/tree/master/.github/workflows/test.yaml)  
 
 ---
 
@@ -149,4 +149,4 @@ Workflows may rely on:
 ## 📖 References
 - [GitHub Actions Documentation](https://docs.github.com/en/actions)  
 - [Nixopus Documentation](https://docs.nixopus.com/install/)  
-- [Workflows Directory](.github/workflows/)  
+- [Workflows Directory](https://github.com/raghavyuva/nixopus/tree/master/.github/workflows/)  
