@@ -82,7 +82,3 @@ Nixopus is derived from the combination of "octopus" and the Linux penguin (Tux)
   <img src="https://contrib.rocks/image?repo=raghavyuva/nixopus" alt="Nixopus project contributors" />
 </a>
 
-## Roadmap
-
-Curious about what's next for Nixopus? Explore our planned features in the
-[public roadmap discussion](https://github.com/raghavyuva/nixopus/discussions/262).
