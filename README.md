@@ -11,7 +11,8 @@
   <a href="https://nixopus.com"><b>Website</b></a> •
   <a href="https://docs.nixopus.com"><b>Documentation</b></a> •
   <a href="https://docs.nixopus.com/blog/"><b>Blog</b></a> •
-  <a href="https://discord.gg/skdcq39Wpv"><b>Discord</b></a>
+  <a href="https://discord.gg/skdcq39Wpv"><b>Discord</b></a> •
+  <a href="https://github.com/raghavyuva/nixopus/discussions/262"><b>Roadmap</b></a>
 </p>
 
 <img width="1210" height="764" alt="image" src="https://github.com/user-attachments/assets/3f1dc1e0-956d-4785-8745-ed59d0390afd" />
@@ -83,6 +84,5 @@ Nixopus is derived from the combination of "octopus" and the Linux penguin (Tux)
 
 ## Roadmap
 
-Curious about what's coming next in Nixopus? Check out our planned features and roadmap in detail here:  
-[View the Roadmap](https://github.com/raghavyuva/nixopus/discussions/262)
-
+Curious about what's next for Nixopus? Explore our planned features in the
+[public roadmap discussion](https://github.com/raghavyuva/nixopus/discussions/262).
