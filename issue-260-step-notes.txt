@@ -1,0 +1,38 @@
+1. Confirm Scope                                                                                                NEW
+    - Only cover Nixopus service metrics.                                                                   DONE
+    - No Prometheus client baked in everywhere.                                                             DONE
+    - App-level metrics = future issue.                                                                     MOVED TO 9.
+2. Environment Setup                                                                                            IN PROGRESS
+    - Clone repo, checkout 260-api-endpoints-for-nixopus-metrics-and-service-uptime                         DONE
+    - Install dependencies.                                                                                 IN PROGRESS - CONFLICTS PORT 80
+    - Run project locally.                                                                                  NEW
+3. Define /metrics Endpoint                                                                                     NEW
+    - Single Fuego route: /metrics.                                                                         NEW
+    - Include uptime, request stats, response times, and system resources / resource usage.                 NEW
+    - Keep schema flexible for future extensions.                                                           NEW
+4. Implement Metrics Collection                                                                                 NEW
+    - Uptime: track service start time.                                                                     NEW
+    - Requests/errors/latency: middleware/logger.                                                           NEW
+    - Resources: use OS-level libraries (psutil for Python, os/perf_hooks for Node.js).                     NEW
+5. Keep Integration Light                                                                                       NEW
+    - Provide JSON first.                                                                                   NEW
+    - Optional Prometheus-style exporter later if maintainers agree.                                        NEW
+6. Testing                                                                                                      NEW
+    - Unit tests for endpoint correctness: verify /metrics JSON.                                            NEW
+    - Integration tests: validate counters and resource usage.                                              NEW
+    - Load tests: ensure endpoint doesn’t degrade service performance.                                      NEW
+7. Documentation                                                                                                NEW
+    - Document /metrics schema & example response.                                                          NEW
+    - Note scrape-friendly format for future integrations.                                                  NEW
+8. Commit & PR                                                                                                  NEW
+    - Commit changes with clear message. e.g. `feat: Add /metrics endpoint for Nixopus service monitoring`  NEW
+    - Open PR explaining endpoints, metrics/data collected, and future extensibility.                       NEW
+9. Open new issue about app-level metrics after this current /metrics work is merged or close to completion.    NEW
+    - Title: Expose metrics for apps deployed via Nixopus (future work)                                     NEW
+    - Description:                                                                                          NEW
+        - Goal: Collect app-level metrics (uptime, requests, errors, response times, resource usage).
+        - Integration: Consider cAdvisor / prometheus-blackbox or other scrape-friendly solutions.
+        - Dependencies: Current /metrics endpoint in Nixopus service.
+    - Labels / Milestone:                                                                                   NEW
+        - Label as enhancement or future.
+        - Optionally assign to a future milestone (e.g., v3.1.0).
