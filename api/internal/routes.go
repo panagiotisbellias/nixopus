@@ -276,6 +276,7 @@ func (router *Router) Routes() {
 
 func (s *Router) BasicRoutes(fs *fuego.Server) {
 	fuego.Get(fs, "", health.HealthCheck)
+	fuego.Get(fs, "/metrics", routes.MetricsHandler)
 	versionGroup := fuego.Group(fs, "/versions")
 	fuego.Get(versionGroup, "", func(c fuego.ContextNoBody) (interface{}, error) {
 		docs := api.NewVersionDocumentation()
