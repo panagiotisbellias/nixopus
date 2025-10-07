@@ -4,9 +4,9 @@
     - App-level metrics = future issue.                                                                     MOVED TO 9.
 2. Environment Setup                                                                                            IN PROGRESS
     - Clone repo, checkout 260-api-endpoints-for-nixopus-metrics-and-service-uptime                         DONE
-    - Install dependencies.                                                                                 IN PROGRESS - CONFLICTS PORT 80
+    - Install dependencies.                                                                                 NEW
     - Run project locally.                                                                                  NEW
-3. Define /metrics Endpoint                                                                                     NEW
+3. Define /metrics Endpoint                                                                                     IN PROGRESS
     - Single Fuego route: /metrics.                                                                         NEW
     - Include uptime, request stats, response times, and system resources / resource usage.                 NEW
     - Keep schema flexible for future extensions.                                                           NEW
@@ -36,3 +36,4 @@
     - Labels / Milestone:                                                                                   NEW
         - Label as enhancement or future.
         - Optionally assign to a future milestone (e.g., v3.1.0).
+10. Should add note to redirect to the correct contribution guide                                               NEW
